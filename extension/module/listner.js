@@ -1,10 +1,9 @@
 import { getAllTabs } from "./manageTab.js";
 const PORT = 3000
-
 const tabCreatedListener = () => {
 	browser.tabs.onCreated.addListener(async (tab) => {
 		try {
-			await fetch(`http://localhost:${PORT}/api/tabs/tabCreated`, {
+			const response = await fetch(`http://localhost:${PORT}/api/tabs`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -18,25 +17,25 @@ const tabCreatedListener = () => {
 					status: tab.status,
 				})
 			})
-		} catch (err) {
-			throw console.error(new Error("Couldn't send onCreated event", err))
+			if (!response.ok) {
+				console.error(new Error("Server rejected tab create request"), { cause: await response.text() });
+			}
+		} catch (error) {
+			console.error(new Error("Couldn't send onCreated event", { cause: error }))
 		}
 	});
 }
-
 const tabRemovedListener = () => {
-	browser.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
+	browser.tabs.onRemoved.addListener(async (tabId) => {
 		try {
-			await fetch(`http://localhost:${PORT}/api/tabs/tabRemoved`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					id: tabId,
-					removeInfo: removeInfo
-				})
+			const response = await fetch(`http://localhost:${PORT}/api/tabs/${tabId}`, {
+				method: 'DELETE',
 			})
-		} catch (err) {
-			throw new Error("Coundn't send onRemoved event", err)
+			if (!response.ok) {
+				console.error(new Error("Server rejected tab removed request"), { cause: await response.text() });
+			}
+		} catch (error) {
+			console.error(new Error("Couldn't send onUpdated event"), { cause: error });
 		}
 	});
 }
@@ -44,36 +43,32 @@ const tabRemovedListener = () => {
 const tabUpdatedListener = () => {
 	browser.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
 		try {
-			await fetch(`http://localhost:${PORT}/api/tabs/tabUpdated`, {
-				method: 'POST',
+			const response = await fetch(`http://localhost:${PORT}/api/tabs/${tabId}`, {
+				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					id: tabId,
-					changeInfo: changeInfo,
-				})
-			})
-		} catch (err) {
-			throw new Error("Cound't send onUpdate event", err)
+				body: JSON.stringify(changeInfo)
+			});
+			if (!response.ok) {
+				console.error(new Error("Server rejected tab update request"), { cause: await response.text() });
+			}
+		} catch (error) {
+			console.error(new Error("Couldn't send onUpdated event"), { cause: error });
 		}
 	},
-		{
-			properties: ["title", "url", "status", "groupId"]
-		}
+		{ properties: ["title", "url", "status", "groupId"] }
 	);
-}
+};
 
 const onInstall = () => {
 	browser.runtime.onInstalled.addListener(() => {
 		getAllTabs(PORT);
 	});
 }
-
 const onStartup = () => {
 	browser.runtime.onStartup.addListener(() => {
 		getAllTabs(PORT);
 	});
 }
-
 export {
 	tabCreatedListener,
 	tabRemovedListener,

@@ -1,4 +1,4 @@
-import { createTabEntry, createManyTabEntry, updateTabEntry, removeTabEntry } from "./tabs.repository.js"
+import { createTabEntry, updateTabEntry, removeTabEntry } from "./tabs.repository.js"
 import { constructTree, sync } from './tabs.service.js'
 
 export const handleTabCreated = async (req, res) => {
@@ -7,8 +7,9 @@ export const handleTabCreated = async (req, res) => {
 };
 
 export const handleTabRemoved = async (req, res) => {
-	await removeTabEntry(req.body)
-	res.status(200).json({ message: 'Tab removed event received' });
+	const { id } = req.params;
+	await removeTabEntry({ id });
+	res.status(200).json({ message: 'Tab removed successfully' });
 };
 
 export const handleTabUpdated = async (req, res) => {
