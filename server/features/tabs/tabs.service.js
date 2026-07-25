@@ -1,4 +1,4 @@
-import { createManyTabEntry, deleteAllTabEntries, readTabEntry } from "./tabs.repository.js"
+import { createManyTabEntry, createTabEntry, deleteAllTabEntries, readTabEntry } from "./tabs.repository.js"
 
 export const constructTree = async () => {
 	let queryResult = await readTabEntry({})
