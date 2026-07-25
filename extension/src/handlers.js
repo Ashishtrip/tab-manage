@@ -3,42 +3,45 @@ const TIMEOUT = 5000;
 
 async function tabCreatedHandler(tab) {
 	try {
-		socket.timeout(TIMEOUT).emit("tab:created", {
-			id: tab.id,
-			index: tab.index,
-			windowId: tab.windowId,
-			groupId: tab.groupId,
-			url: tab.url,
-			title: tab.title,
-			openerTabId: tab.openerTabId,
-			status: tab.status,
-		}, (error, response) => {
-			if (error) {
-				console.error(new Error("Server didn't acknowledge tab create"), { cause: error });
-			} else if (!response.success) {
-				console.error(new Error("Server rejected tab create request"), { cause: response.error });
-			}
-		});
+		socket.timeout(TIMEOUT).emit(
+			"tab:created",
+			{
+				id: tab.id,
+				index: tab.index,
+				windowId: tab.windowId,
+				groupId: tab.groupId,
+				url: tab.url,
+				title: tab.title,
+				openerTabId: tab.openerTabId,
+				status: tab.status,
+			},
+			(error, response) => {
+				if (error) {
+					console.error(new Error("Server didn't acknowledge tab create"), { cause: error });
+				} else if (!response.success) {
+					console.error(new Error("Server rejected tab create request"), { cause: response.error });
+				}
+			});
 	} catch (error) {
-		console.error(new Error("Couldn't send onCreated event"), { cause: error });
+		console.error(new Error("Couldn't send tab:created event"), { cause: error });
 	}
 }
 
 
 async function tabUpdatedHandler(tabId, changeInfo) {
 	try {
-		socket.timeout(TIMEOUT).emit("tab:updated", {
-			id: tabId,
-			changeInfo: changeInfo
-		}, (error, response) => {
-			if (error) {
-				console.error(new Error("Server didn't acknowledge tab updated"), { cause: error });
-			} else if (!response.success) {
-				console.error(new Error("Server rejected tab update request"), { cause: response.error });
-			}
-		})
+		socket.timeout(TIMEOUT).emit(
+			"tab:updated",
+			{ id: tabId, changeInfo: changeInfo },
+			(error, response) => {
+				if (error) {
+					console.error(new Error("Server didn't acknowledge tab updated"), { cause: error });
+				} else if (!response.success) {
+					console.error(new Error("Server rejected tab update request"), { cause: response.error });
+				}
+			})
 	} catch (error) {
-		console.error(new Error("Couldn't send onUpdated event"), { cause: error });
+		console.error(new Error("Couldn't send tap:updated event"), { cause: error });
 	}
 }
 
@@ -48,14 +51,14 @@ async function tabDeletedHandler(tabId) {
 			"tab:deleted",
 			{ id: tabId, },
 			(error, response) => {
-			if (error) {
-				console.error(new Error("Server didn't acknowledge tab delete"), { cause: error });
-			} else if (!response.success) {
-				console.error(new Error("Server rejected tab delete request"), { cause: response.error });
-			}
-		})
+				if (error) {
+					console.error(new Error("Server didn't acknowledge tab delete"), { cause: error });
+				} else if (!response.success) {
+					console.error(new Error("Server rejected tab delete request"), { cause: response.error });
+				}
+			})
 	} catch (error) {
-		console.error(new Error("Couldn't send onUpdated event"), { cause: error });
+		console.error(new Error("Couldn't send tab:deleted event"), { cause: error });
 	}
 }
 
