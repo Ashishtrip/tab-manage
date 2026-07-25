@@ -1,5 +1,5 @@
-import { createTabEntry, updateTabEntry, removeTabEntry} from './tabs.repository.js';
-import { constructTree, sync } from './tabs.service.js'
+import { createTabEntry, updateTabEntry, deleteTabEntry} from './tabs.repository.js';
+import { getTabsTree, sync } from './tabs.service.js'
 
 export function registerTabHandlers(io, socket) {
 	socket.on('tab:created', async (tabData, callback) => {
@@ -15,7 +15,7 @@ export function registerTabHandlers(io, socket) {
 
 	socket.on('tab:deleted', async ({ id }, callback) => {
 		try {
-			await removeTabEntry({ id });
+			await deleteTabEntry({ id });
 			callback?.({ success: true });
 			io.emit('tree:updated');
 		} catch (error) {
@@ -37,7 +37,7 @@ export function registerTabHandlers(io, socket) {
 
 	socket.on('tree:get', async (_, callback) => {
 		try {
-			const tree = await constructTree();
+			const tree = await getTabsTree();
 			callback?.({ success: true, data: tree });
 		} catch (error) {
 			console.error(new Error("Failed to construct tab tree"), { cause: error });

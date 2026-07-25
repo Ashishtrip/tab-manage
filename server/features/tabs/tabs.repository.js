@@ -1,5 +1,4 @@
 import Tabs from "./tabs.model.js";
-
 const createTabEntry = async (tabObj) => {
 	let status;
 	try {
@@ -12,7 +11,6 @@ const createTabEntry = async (tabObj) => {
 		console.warn("Couldn't insert tab entry", tabObj.id);
 	}
 };
-
 const createManyTabEntry = async (arr) => {
 	if (arr.length === 0) {
 		return 0
@@ -21,7 +19,6 @@ const createManyTabEntry = async (arr) => {
 		createTabEntry(entry)
 	}
 };
-
 const updateTabEntry = async (updatedInfo) => {
 	// TODO: This function is invoked way too many times because of how
 	// onUpdated event listener works. Fix that later
@@ -43,8 +40,7 @@ const updateTabEntry = async (updatedInfo) => {
 		}
 	}
 };
-
-const removeTabEntry = async (removeInfo) => {
+const deleteTabEntry = async (removeInfo) => {
 	let status;
 	try {
 		status = await Tabs.deleteOne({ id: removeInfo.id });
@@ -56,7 +52,6 @@ const removeTabEntry = async (removeInfo) => {
 		console.warn("No tab entry was found for", removeInfo.id);
 	}
 };
-
 const readTabEntry = async (searchCondition) => {
 	let output;
 	try {
@@ -67,7 +62,6 @@ const readTabEntry = async (searchCondition) => {
 	}
 	return output
 };
-
 const deleteAllTabEntries = async () => {
 	let status;
 	try {
@@ -80,12 +74,21 @@ const deleteAllTabEntries = async () => {
 		console.warn("tab-info table is already empty");
 	}
 };
-
+const deleteWorkspaceTabEntries = async (workspaceId) => {
+	let status;
+	try {
+		status = await Tabs.deleteMany({ workspaceId });
+	} catch (error) {
+		console.error(new Error("Couldn't delete tab entries for workspace"), { cause: error });
+		return;
+	}
+	return status;
+};
 export {
-	removeTabEntry,
+	deleteTabEntry,
 	updateTabEntry,
 	createTabEntry,
 	readTabEntry,
 	deleteAllTabEntries,
-	createManyTabEntry 
+	createManyTabEntry,
 }
