@@ -1,23 +1,27 @@
 :root {
 	--ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
 
-	--app-bg: #1e1e1e;
-	--sidebar-bg: #202020;
-	--panel-bg: #262626;
-	--input-bg: #1c1c1c;
+	--app-bg: #ffffff;
+	--sidebar-bg: #f7f7f8;
+	--panel-bg: #ffffff;
+	--input-bg: #ffffff;
 
-	--border-color: #333333;
+	--border-color: #e4e4e6;
 
-	--text-primary: #dcdcdc;
-	--text-muted: #a0a0a0;
-	--text-faint: #6f6f6f;
+	--text-primary: #1c1c1f;
+	--text-muted: #6b6b72;
+	--text-faint: #9a9aa1;
 
-	--hover-bg: #2a2a2a;
-	--active-bg: #2f2b3d;
-	--drop-bg: #35304a;
+	--hover-bg: #f1f1f3;
+	--active-bg: #ece9fb;
+	--drop-bg: #e4e0fa;
 
-	--accent: #8c7ae6;
-	--accent-hover: #7a68d6;
+	--accent: #7c6bdb;
+	--accent-hover: #6c5bcb;
+
+	--badge-bg: #eeeeef;
+
+	--dot-color: #dcdcdf;
 
 	--base-font-size: 16px;
 }

@@ -1,4 +1,4 @@
-import type { TreeEntry, TabTreeNode, TabTree } from "./TabTree";
+import type { TreeEntry, TabTreeNode } from "./TabTree";
 import "./SearchResults.css";
 
 function faviconUrl(url: string): string | null {
@@ -12,10 +12,13 @@ function faviconUrl(url: string): string | null {
 
 function FolderIcon() {
 	return (
-		<svg className="tab-tree-folder-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+		<svg className="tab-tree-folder-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
 			<path
-				d="M3 7.4C3 6.07 4.07 5 5.4 5h4.1l1.9 2.1h8.2c1.33 0 2.4 1.07 2.4 2.4v7.1c0 1.33-1.07 2.4-2.4 2.4H5.4C4.07 18.9 3 17.83 3 16.5V7.4Z"
-				fill="currentColor"
+				d="M2.5 5.3c0-.83.67-1.5 1.5-1.5h3.6l1.6 1.8H16c.83 0 1.5.67 1.5 1.5v6.6c0 .83-.67 1.5-1.5 1.5H4c-.83 0-1.5-.67-1.5-1.5V5.3Z"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="1.4"
+				strokeLinejoin="round"
 			/>
 		</svg>
 	);

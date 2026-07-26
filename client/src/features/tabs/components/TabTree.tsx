@@ -60,8 +60,6 @@ interface TabTreeViewProps {
 	/** The entries for a single window (get this via tree[windowId] from the parent). */
 	entries: TreeEntry[];
 	windowId: number;
-	/** Display title for the panel header, e.g. "Window 1". */
-	title?: string;
 	onSelectTab?: (tab: TabTreeNode) => void;
 	onDeleteTab?: (tab: TabTreeNode) => void;
 	onDeleteFolder?: (folder: FolderTreeNode) => void;
@@ -80,6 +78,14 @@ function faviconUrl(url: string): string | null {
 	}
 }
 
+function countDescendantTabs(nodes: TreeEntry[]): number {
+	if (!Array.isArray(nodes)) return 0;
+	return nodes.reduce(
+		(sum, n) => sum + (n.type === "tab" ? 1 : 0) + countDescendantTabs(n.children ?? []),
+		0
+	);
+}
+
 function ChevronIcon({ expanded }: { expanded: boolean }) {
 	return (
 		<svg
@@ -94,14 +100,16 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
 	);
 }
 
-// Flat, filled folder glyph — closer to Arc/Zen's soft rounded folder tiles
-// than a plain line-art outline.
+// Thin outline folder glyph, matching a plain file-manager look.
 function FolderIcon() {
 	return (
-		<svg className="tab-tree-folder-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+		<svg className="tab-tree-folder-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
 			<path
-				d="M3 7.4C3 6.07 4.07 5 5.4 5h4.1l1.9 2.1h8.2c1.33 0 2.4 1.07 2.4 2.4v7.1c0 1.33-1.07 2.4-2.4 2.4H5.4C4.07 18.9 3 17.83 3 16.5V7.4Z"
-				fill="currentColor"
+				d="M2.5 5.3c0-.83.67-1.5 1.5-1.5h3.6l1.6 1.8H16c.83 0 1.5.67 1.5 1.5v6.6c0 .83-.67 1.5-1.5 1.5H4c-.83 0-1.5-.67-1.5-1.5V5.3Z"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="1.4"
+				strokeLinejoin="round"
 			/>
 		</svg>
 	);
@@ -141,6 +149,7 @@ function TreeRow({
 	const hasChildren = node.children.length > 0;
 	const isFolder = node.type === "folder";
 	const favicon = !isFolder ? faviconUrl(node.url) : null;
+	const tabCount = isFolder ? countDescendantTabs(node.children) : 0;
 
 	const handleRowClick = () => {
 		if (isFolder) {
@@ -194,11 +203,10 @@ function TreeRow({
 		setDragOver(false);
 		const dragged = dragPayload(e);
 		if (!dragged || !onMoveEntry) return;
-		if (dragged.kind === node.type && dragged.id === node.id) return; // dropped on itself
+		if (dragged.kind === node.type && dragged.id === node.id) return;
 
 		if (isFolder) {
-			// Dropping onto a folder row moves the item inside it, appended last.
-			if (dragged.kind === "folder" && dragged.id === node.id) return; // can't nest a folder in itself
+			if (dragged.kind === "folder" && dragged.id === node.id) return;
 			const maxOrder = node.children.reduce((max, c) => Math.max(max, c.order ?? 0), 0);
 			onMoveEntry({
 				id: dragged.id,
@@ -208,8 +216,6 @@ function TreeRow({
 				parentFolderId: dragged.kind === "folder" ? node.id : undefined,
 			});
 		} else {
-			// Dropping onto a tab row inserts the dragged item just before it,
-			// at that tab's own level.
 			onMoveEntry({
 				id: dragged.id,
 				kind: dragged.kind,
@@ -254,7 +260,7 @@ function TreeRow({
 					<span className="tab-tree-favicon tab-tree-favicon--placeholder" />
 				)}
 
-				<span className="tab-tree-title" title={isFolder ? node.name : node.url}>
+				<span className={`tab-tree-title${isFolder ? " tab-tree-title--folder" : ""}`} title={isFolder ? node.name : node.url}>
 					{isFolder ? node.name : node.title || node.url}
 				</span>
 
@@ -276,6 +282,8 @@ function TreeRow({
 						&times;
 					</button>
 				)}
+
+				{isFolder && <span className="tab-tree-count-badge">{tabCount}</span>}
 			</div>
 
 			{expanded && hasChildren && (
@@ -310,18 +318,9 @@ type PendingModal =
 	| { kind: "create-folder"; context: CreationContext }
 	| { kind: "rename-folder"; folder: FolderTreeNode };
 
-function PlusIcon() {
-	return (
-		<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-			<path d="M8 2.5V13.5M2.5 8H13.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-		</svg>
-	);
-}
-
 export default function TabTreeView({
 	entries,
 	windowId,
-	title,
 	onSelectTab,
 	onDeleteTab,
 	onDeleteFolder,
@@ -336,16 +335,6 @@ export default function TabTreeView({
 
 	const openMenu = (e: React.MouseEvent, context: CreationContext, targetFolder: FolderTreeNode | null) => {
 		setMenu({ x: e.clientX, y: e.clientY, context, targetFolder });
-	};
-
-	const handleAddClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-		const rect = e.currentTarget.getBoundingClientRect();
-		setMenu({
-			x: rect.left,
-			y: rect.bottom + 4,
-			context: { windowId, parentFolderId: null },
-			targetFolder: null,
-		});
 	};
 
 	const menuItems: ContextMenuItem[] = menu
@@ -366,7 +355,7 @@ export default function TabTreeView({
 		: [];
 
 	const handlePanelContextMenu = (e: React.MouseEvent) => {
-		if (e.target !== e.currentTarget) return; // let row-level handlers own their own right-clicks
+		if (e.target !== e.currentTarget) return;
 		e.preventDefault();
 		openMenu(e, { windowId, parentFolderId: null }, null);
 	};
@@ -394,86 +383,73 @@ export default function TabTreeView({
 	};
 
 	return (
-		<div className="tab-tree-panel">
-			{title && (
-				<div className="tab-tree-panel-header">
-					<span className="tab-tree-panel-title">{title}</span>
-					{(onCreateTab || onCreateFolder) && (
-						<button type="button" className="tab-tree-add-button" onClick={handleAddClick} title="Add">
-							<PlusIcon />
-						</button>
-					)}
-				</div>
+		<div
+			className={`tab-tree${rootDragOver ? " tab-tree--drag-over" : ""}`}
+			onContextMenu={handlePanelContextMenu}
+			onDragOver={onMoveEntry ? handleRootDragOver : undefined}
+			onDragLeave={onMoveEntry ? () => setRootDragOver(false) : undefined}
+			onDrop={onMoveEntry ? handleRootDrop : undefined}
+		>
+			{entries.length === 0 ? (
+				<div className="tab-tree-empty">No tabs in this window.</div>
+			) : (
+				entries.map((entry) => (
+					<TreeRow
+						key={`${entry.type}:${entry.id}`}
+						node={entry}
+						depth={0}
+						onSelectTab={onSelectTab}
+						onDeleteTab={onDeleteTab}
+						onDeleteFolder={onDeleteFolder}
+						onContextMenuRequest={openMenu}
+						onMoveEntry={onMoveEntry}
+					/>
+				))
 			)}
 
-			<div
-				className={`tab-tree${rootDragOver ? " tab-tree--drag-over" : ""}`}
-				onContextMenu={handlePanelContextMenu}
-				onDragOver={onMoveEntry ? handleRootDragOver : undefined}
-				onDragLeave={onMoveEntry ? () => setRootDragOver(false) : undefined}
-				onDrop={onMoveEntry ? handleRootDrop : undefined}
-			>
-				{entries.length === 0 ? (
-					<div className="tab-tree-empty">No tabs in this window.</div>
-				) : (
-					entries.map((entry) => (
-						<TreeRow
-							key={`${entry.type}:${entry.id}`}
-							node={entry}
-							depth={0}
-							onSelectTab={onSelectTab}
-							onDeleteTab={onDeleteTab}
-							onDeleteFolder={onDeleteFolder}
-							onContextMenuRequest={openMenu}
-							onMoveEntry={onMoveEntry}
-						/>
-					))
-				)}
+			{menu && menuItems.length > 0 && (
+				<ContextMenu x={menu.x} y={menu.y} items={menuItems} onClose={() => setMenu(null)} />
+			)}
 
-				{menu && menuItems.length > 0 && (
-					<ContextMenu x={menu.x} y={menu.y} items={menuItems} onClose={() => setMenu(null)} />
-				)}
+			{pendingModal?.kind === "create-tab" && (
+				<Modal
+					title="Open a new tab"
+					placeholder="https://example.com"
+					confirmLabel="Open"
+					onSubmit={(url) => {
+						onCreateTab?.(pendingModal.context, url);
+						setPendingModal(null);
+					}}
+					onCancel={() => setPendingModal(null)}
+				/>
+			)}
 
-				{pendingModal?.kind === "create-tab" && (
-					<Modal
-						title="Open a new tab"
-						placeholder="https://example.com"
-						confirmLabel="Open"
-						onSubmit={(url) => {
-							onCreateTab?.(pendingModal.context, url);
-							setPendingModal(null);
-						}}
-						onCancel={() => setPendingModal(null)}
-					/>
-				)}
+			{pendingModal?.kind === "create-folder" && (
+				<Modal
+					title="New folder"
+					placeholder="Folder name"
+					confirmLabel="Create"
+					onSubmit={(name) => {
+						onCreateFolder?.(pendingModal.context, name);
+						setPendingModal(null);
+					}}
+					onCancel={() => setPendingModal(null)}
+				/>
+			)}
 
-				{pendingModal?.kind === "create-folder" && (
-					<Modal
-						title="New folder"
-						placeholder="Folder name"
-						confirmLabel="Create"
-						onSubmit={(name) => {
-							onCreateFolder?.(pendingModal.context, name);
-							setPendingModal(null);
-						}}
-						onCancel={() => setPendingModal(null)}
-					/>
-				)}
-
-				{pendingModal?.kind === "rename-folder" && (
-					<Modal
-						title="Rename folder"
-						placeholder="Folder name"
-						confirmLabel="Rename"
-						initialValue={pendingModal.folder.name}
-						onSubmit={(name) => {
-							onRenameFolder?.(pendingModal.folder, name);
-							setPendingModal(null);
-						}}
-						onCancel={() => setPendingModal(null)}
-					/>
-				)}
-			</div>
+			{pendingModal?.kind === "rename-folder" && (
+				<Modal
+					title="Rename folder"
+					placeholder="Folder name"
+					confirmLabel="Rename"
+					initialValue={pendingModal.folder.name}
+					onSubmit={(name) => {
+						onRenameFolder?.(pendingModal.folder, name);
+						setPendingModal(null);
+					}}
+					onCancel={() => setPendingModal(null)}
+				/>
+			)}
 		</div>
 	);
 }
