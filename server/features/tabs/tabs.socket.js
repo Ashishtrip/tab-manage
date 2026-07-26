@@ -1,4 +1,4 @@
-import { createTabEntry, updateTabEntry, deleteTabEntry} from './tabs.repository.js';
+import { createTabEntry, updateTabEntry, removeTabEntry} from './tabs.repository.js';
 import { getTabsTree, sync } from './tabs.service.js'
 
 export function registerTabHandlers(io, socket) {
@@ -15,7 +15,7 @@ export function registerTabHandlers(io, socket) {
 
 	socket.on('tab:deleted', async ({ id }, callback) => {
 		try {
-			await deleteTabEntry({ id });
+			await removeTabEntry({ id });
 			callback?.({ success: true });
 			io.emit('tree:updated');
 		} catch (error) {

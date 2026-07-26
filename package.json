@@ -1,30 +1,17 @@
 {
-  "name": "tab-server",
+  "name": "tab-manager-mono",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node server/server.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/whitespacecowboy/tab-server.git"
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/whitespacecowboy/tab-server/issues"
-  },
-  "homepage": "https://github.com/whitespacecowboy/tab-server#readme",
+  "type": "commonjs",
   "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "http": "^0.0.1-security",
-    "mongoose": "^9.8.0",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
+    "concurrently": "^10.0.4"
   }
 }

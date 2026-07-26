@@ -1,0 +1,105 @@
+.tab-tree {
+	font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+	font-size: 13px;
+	line-height: 1.6;
+	background: #ffffff;
+	color: #2a2c30;
+	padding: 16px 20px;
+}
+
+.tab-tree-empty {
+	font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+	font-size: 13px;
+	color: #8a8f98;
+	padding: 12px 16px;
+}
+
+.tab-tree-window + .tab-tree-window {
+	margin-top: 18px;
+}
+
+.tab-tree-window-header {
+	color: #6b7078;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	font-size: 11px;
+	margin-bottom: 6px;
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+}
+
+.tab-tree-window-count {
+	color: #a4a9b0;
+	font-weight: 400;
+	text-transform: none;
+}
+
+.tab-tree-row {
+	display: flex;
+	align-items: center;
+	white-space: nowrap;
+	border-radius: 4px;
+	padding: 1px 4px;
+}
+
+.tab-tree-row--toggleable {
+	cursor: pointer;
+}
+
+.tab-tree-row:hover {
+	background: #f2f2f3;
+}
+
+.tab-tree-guides {
+	color: #c8cace;
+	white-space: pre;
+}
+
+.tab-tree-caret {
+	display: inline-block;
+	width: 14px;
+	color: #9a9ea5;
+	flex-shrink: 0;
+}
+
+.tab-tree-group-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	margin-right: 6px;
+	flex-shrink: 0;
+}
+
+.tab-tree-status {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	margin-right: 6px;
+	flex-shrink: 0;
+	border: 1px solid #9a9ea5;
+	background: transparent;
+}
+
+.tab-tree-status--complete {
+	background: #2a2c30;
+	border-color: #2a2c30;
+}
+
+.tab-tree-status--loading {
+	background: #c8cace;
+	border-color: #9a9ea5;
+}
+
+.tab-tree-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: #2a2c30;
+	cursor: pointer;
+}
+
+.tab-tree-title:hover {
+	color: #55585e;
+	text-decoration: underline;
+}

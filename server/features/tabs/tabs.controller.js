@@ -1,4 +1,4 @@
-import { sync, getTabsTree } from './tabs.service.js'
+import { getTabsTree, sync } from './tabs.service.js'
 
 export const handleShowTree = async (_, res) => {
 	const output = await getTabsTree()
