@@ -1,5 +1,5 @@
-import { createManyTabEntry, createTabEntry, upsertManyTabEntries, removeStaleTabEntries, readTabEntry } from "./tabs.repository.js"
-import { readFolderEntries } from "../folders/folders.repository.js"
+import { createManyTabEntry, createTabEntry, upsertManyTabEntries, removeStaleTabEntries, readTabEntry, moveTabEntry } from "./tabs.repository.js"
+import { readFolderEntries, moveFolderEntry } from "../folders/folders.repository.js"
 
 export const constructTree = async () => {
 	const [tabs, folders] = await Promise.all([
@@ -11,8 +11,6 @@ export const constructTree = async () => {
 	const plainTabs = tabs.map((t) => (t.toObject ? t.toObject() : t));
 	const plainFolders = (folders ?? []).map((f) => (f.toObject ? f.toObject() : f));
 
-	// Index every node (tab or folder) by a string key so both id spaces
-	// (numeric browser tab ids, ObjectId folder ids) can share one map.
 	const nodeByKey = new Map();
 	for (const tab of plainTabs) {
 		nodeByKey.set(`tab:${tab.id}`, { ...tab, type: "tab", children: [] });
@@ -32,7 +30,6 @@ export const constructTree = async () => {
 		return tree[windowId];
 	};
 
-	// Folders nest under their parent folder, or sit at the window root.
 	for (const folder of plainFolders) {
 		const node = nodeByKey.get(`folder:${folder._id}`);
 		const parentKey = folder.parentFolderId ? `folder:${folder.parentFolderId}` : null;
@@ -44,8 +41,6 @@ export const constructTree = async () => {
 		}
 	}
 
-	// Tabs nest under their folder if assigned; otherwise fall back to the
-	// existing opener-based auto-tree; otherwise sit at the window root.
 	for (const tab of plainTabs) {
 		const node = nodeByKey.get(`tab:${tab.id}`);
 		const folderKey = tab.folderId ? `folder:${tab.folderId}` : null;
@@ -64,17 +59,15 @@ export const constructTree = async () => {
 		}
 	}
 
-	// Sort each level: folders first, then by index within each type.
+	// Sort each level purely by manual `order` — mixes tabs and folders
+	// freely, so drag-and-drop arrangement is respected everywhere.
 	const sortLevel = (nodes) => {
-		nodes.sort((a, b) => {
-			if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
-			return (a.index ?? 0) - (b.index ?? 0);
-		});
+		nodes.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 		nodes.forEach((n) => sortLevel(n.children));
 	};
 	Object.values(tree).forEach(sortLevel);
 
-	return tree; // { [windowId]: [ { ...node, type, children: [...] }, ... ] }
+	return tree;
 }
 
 export const sync = async (arr) => {
@@ -83,6 +76,17 @@ export const sync = async (arr) => {
 	const keepIds = arr.map((t) => t.id);
 	await upsertManyTabEntries(arr);
 	await removeStaleTabEntries(windowIds, keepIds);
+}
+
+// Generic drag-and-drop move for either a tab or a folder.
+export const moveEntry = async ({ id, kind, order, folderId, parentFolderId }) => {
+	if (kind === "tab") {
+		return moveTabEntry({ id, order, folderId });
+	}
+	if (kind === "folder") {
+		return moveFolderEntry({ id, order, parentFolderId });
+	}
+	throw new Error(`Unknown entry kind: ${kind}`);
 }
 
 // tabs.socket.js imports this name — same function as constructTree

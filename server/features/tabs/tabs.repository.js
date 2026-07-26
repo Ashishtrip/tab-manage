@@ -23,8 +23,6 @@ const createManyTabEntry = async (arr) => {
 };
 
 const updateTabEntry = async (updatedInfo) => {
-	// TODO: This function is invoked way too many times because of how
-	// onUpdated event listener works. Fix that later
 	let status;
 	try {
 		status = await Tabs.updateOne(
@@ -81,8 +79,10 @@ const deleteAllTabEntries = async () => {
 	}
 };
 
-// Upserts browser-owned fields only (index/windowId/groupId/url/title/openerTabId/status).
-// Deliberately never touches folderId, so a tab's folder placement survives a resync.
+// Upserts browser-owned fields only. Deliberately never touches folderId
+// or order, so folder placement and manual arrangement survive a resync.
+// On first insert, order defaults to the browser's own tab-strip position
+// so a freshly-synced tree still looks sensible before anyone rearranges it.
 const upsertManyTabEntries = async (arr) => {
 	if (!arr || arr.length === 0) {
 		return;
@@ -100,7 +100,7 @@ const upsertManyTabEntries = async (arr) => {
 					openerTabId: tab.openerTabId,
 					status: tab.status,
 				},
-				$setOnInsert: { id: tab.id },
+				$setOnInsert: { id: tab.id, order: tab.index },
 			},
 			upsert: true,
 		},
@@ -115,9 +115,6 @@ const upsertManyTabEntries = async (arr) => {
 	return status;
 };
 
-// Removes tabs that are no longer open, scoped only to the windows we just
-// synced — so a partial sync (e.g. currentWindow-only) never wipes out tabs
-// belonging to other windows we didn't hear about this time.
 const removeStaleTabEntries = async (windowIds, keepIds) => {
 	let status;
 	try {
@@ -132,6 +129,22 @@ const removeStaleTabEntries = async (windowIds, keepIds) => {
 	return status;
 };
 
+// Single-item drag-and-drop move: updates this tab's manual order and,
+// if it changed folders, its folderId.
+const moveTabEntry = async ({ id, order, folderId }) => {
+	let status;
+	try {
+		status = await Tabs.updateOne(
+			{ id },
+			{ $set: { order, folderId: folderId ?? null } }
+		);
+	} catch (error) {
+		console.error(new Error("Couldn't move tab entry"), { cause: error });
+		return;
+	}
+	return status;
+};
+
 export {
 	removeTabEntry,
 	updateTabEntry,
@@ -140,5 +153,6 @@ export {
 	deleteAllTabEntries,
 	createManyTabEntry,
 	upsertManyTabEntries,
-	removeStaleTabEntries
+	removeStaleTabEntries,
+	moveTabEntry
 }

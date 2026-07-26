@@ -14,9 +14,12 @@
 
 	--hover-bg: #2a2a2a;
 	--active-bg: #2f2b3d;
+	--drop-bg: #35304a;
 
 	--accent: #8c7ae6;
 	--accent-hover: #7a68d6;
+
+	--base-font-size: 16px;
 }
 
 * {
@@ -28,4 +31,5 @@ body {
 	background: var(--app-bg);
 	color: var(--text-primary);
 	font-family: var(--ui-font);
+	font-size: var(--base-font-size);
 }

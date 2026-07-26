@@ -1,17 +1,60 @@
+.tab-tree-panel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.tab-tree-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 16px 10px;
+	flex-shrink: 0;
+}
+
+.tab-tree-panel-title {
+	font-size: 17px;
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.tab-tree-add-button {
+	width: 28px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: none;
+	border-radius: 6px;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.tab-tree-add-button:hover {
+	background: var(--hover-bg);
+	color: var(--text-primary);
+}
+
 .tab-tree {
+	flex: 1;
+	overflow-y: auto;
 	font-family: var(--ui-font);
-	font-size: 13.5px;
+	font-size: 16px;
 	color: var(--text-primary);
 	background: var(--app-bg);
-	padding: 14px 10px;
-	min-height: 100%;
+	padding: 10px 10px 40px;
 	position: relative;
+}
+
+.tab-tree--drag-over {
+	background: color-mix(in srgb, var(--drop-bg) 40%, var(--app-bg));
 }
 
 .tab-tree-empty {
 	color: var(--text-faint);
 	padding: 10px 14px;
-	font-size: 13px;
+	font-size: 15px;
 }
 
 .tab-tree-branch {
@@ -21,8 +64,8 @@
 .tab-tree-row {
 	display: flex;
 	align-items: center;
-	height: 30px;
-	border-radius: 6px;
+	height: 36px;
+	border-radius: 7px;
 	cursor: pointer;
 	white-space: nowrap;
 }
@@ -31,14 +74,20 @@
 	background: var(--hover-bg);
 }
 
+.tab-tree-row--drag-over {
+	background: var(--drop-bg);
+	outline: 1px solid var(--accent);
+	outline-offset: -1px;
+}
+
 .tab-tree-chevron-slot {
-	width: 16px;
-	height: 16px;
+	width: 18px;
+	height: 18px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	margin-right: 2px;
+	margin-right: 4px;
 	color: var(--text-faint);
 	border-radius: 4px;
 }
@@ -57,14 +106,14 @@
 
 .tab-tree-folder-icon {
 	color: var(--accent);
-	margin-right: 7px;
+	margin-right: 8px;
 	flex-shrink: 0;
 }
 
 .tab-tree-favicon {
-	width: 15px;
-	height: 15px;
-	margin-right: 7px;
+	width: 16px;
+	height: 16px;
+	margin-right: 8px;
 	flex-shrink: 0;
 	border-radius: 3px;
 }
@@ -82,8 +131,8 @@
 }
 
 .tab-tree-status {
-	width: 6px;
-	height: 6px;
+	width: 7px;
+	height: 7px;
 	border-radius: 50%;
 	margin-left: 8px;
 	margin-right: 8px;
@@ -107,11 +156,11 @@
 	background: transparent;
 	border: none;
 	color: var(--text-faint);
-	font-size: 15px;
+	font-size: 16px;
 	line-height: 1;
 	cursor: pointer;
-	width: 20px;
-	height: 20px;
+	width: 22px;
+	height: 22px;
 	border-radius: 5px;
 	margin-right: 6px;
 	visibility: hidden;
@@ -130,47 +179,4 @@
 .tab-tree-children {
 	border-left: 1px solid var(--border-color);
 	padding-left: 10px;
-}
-
-.tab-tree-panel {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-}
-
-.tab-tree-panel-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 14px 16px 10px;
-	flex-shrink: 0;
-}
-
-.tab-tree-panel-title {
-	font-size: 15px;
-	font-weight: 600;
-	color: var(--text-primary);
-}
-
-.tab-tree-add-button {
-	width: 26px;
-	height: 26px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: transparent;
-	border: none;
-	border-radius: 6px;
-	color: var(--text-muted);
-	cursor: pointer;
-}
-
-.tab-tree-add-button:hover {
-	background: var(--hover-bg);
-	color: var(--text-primary);
-}
-
-.tab-tree {
-	flex: 1;
-	overflow-y: auto;
 }

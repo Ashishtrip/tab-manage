@@ -1,12 +1,12 @@
 import { createTabEntry, updateTabEntry, removeTabEntry } from './tabs.repository.js';
-import { getTabsTree, sync } from './tabs.service.js'
+import { getTabsTree, sync, moveEntry } from './tabs.service.js'
 
 export function registerTabHandlers(io, socket) {
 	socket.on('tab:created', async (tabData, callback) => {
 		try {
 			await createTabEntry(tabData);
 			callback?.({ success: true });
-			io.emit('tree:updated'); // notify all connected clients
+			io.emit('tree:updated');
 		} catch (error) {
 			console.error(new Error("Failed to create tab entry"), { cause: error });
 			callback?.({ success: false, error: error.message });
@@ -57,10 +57,6 @@ export function registerTabHandlers(io, socket) {
 	});
 
 	// --- Client-initiated commands, relayed to the extension ---
-	// The extension executes the real browser.tabs.* call, then reports back
-	// via tab:created/tab:updated/tab:deleted above, which updates the DB
-	// and broadcasts tree:updated. These handlers don't touch the DB directly.
-
 	socket.on('tab:requestFocus', async ({ id, windowId }, callback) => {
 		try {
 			io.emit('command:focus', { tabId: id, windowId });
@@ -87,6 +83,18 @@ export function registerTabHandlers(io, socket) {
 			callback?.({ success: true });
 		} catch (error) {
 			console.error(new Error("Failed to relay create command"), { cause: error });
+			callback?.({ success: false, error: error.message });
+		}
+	});
+
+	// Drag-and-drop arrangement — works for both tabs and folders.
+	socket.on('tree:move', async ({ id, kind, order, folderId, parentFolderId }, callback) => {
+		try {
+			await moveEntry({ id, kind, order, folderId, parentFolderId });
+			callback?.({ success: true });
+			io.emit('tree:updated');
+		} catch (error) {
+			console.error(new Error("Failed to move entry"), { cause: error });
 			callback?.({ success: false, error: error.message });
 		}
 	});

@@ -20,6 +20,18 @@ export function useFolderActions() {
 		);
 	};
 
+	const renameFolder = (folder: FolderTreeNode, name: string) => {
+		socket.emit(
+			"folder:rename",
+			{ id: folder.id, name },
+			(response: CommandResponse) => {
+				if (!response?.success) {
+					console.error("Failed to rename folder", response?.error);
+				}
+			}
+		);
+	};
+
 	const deleteFolder = (folder: FolderTreeNode) => {
 		socket.emit(
 			"folder:delete",
@@ -32,5 +44,5 @@ export function useFolderActions() {
 		);
 	};
 
-	return { createFolder, deleteFolder };
+	return { createFolder, renameFolder, deleteFolder };
 }

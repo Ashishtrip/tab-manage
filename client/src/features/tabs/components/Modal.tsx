@@ -5,16 +5,25 @@ interface ModalProps {
 	title: string;
 	placeholder?: string;
 	confirmLabel?: string;
+	initialValue?: string;
 	onSubmit: (value: string) => void;
 	onCancel: () => void;
 }
 
-export default function Modal({ title, placeholder, confirmLabel = "Create", onSubmit, onCancel }: ModalProps) {
-	const [value, setValue] = useState("");
+export default function Modal({
+	title,
+	placeholder,
+	confirmLabel = "Create",
+	initialValue = "",
+	onSubmit,
+	onCancel,
+}: ModalProps) {
+	const [value, setValue] = useState(initialValue);
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		inputRef.current?.focus();
+		inputRef.current?.select();
 	}, []);
 
 	useEffect(() => {

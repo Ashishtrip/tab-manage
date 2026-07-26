@@ -1,6 +1,14 @@
 import socket from "./socket.js";
 const TIMEOUT = 5000;
 
+function normalizeUrl(input) {
+	const trimmed = input.trim();
+	if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)) {
+		return trimmed;
+	}
+	return `https://${trimmed}`;
+}
+
 async function tabCreatedHandler(tab) {
 	try {
 		socket.timeout(TIMEOUT).emit(
@@ -73,7 +81,7 @@ async function tabDeleteHandler(payload) {
 
 async function tabCreateHandler(payload) {
 	try {
-		await browser.tabs.create({ url: payload.url });
+		await browser.tabs.create({ url: normalizeUrl(payload.url) });
 	} catch (error) {
 		console.error(new Error("Failed to execute create command"), { cause: error });
 	}

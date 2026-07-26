@@ -9,6 +9,10 @@ const tabsSchema = new mongoose.Schema({
 	openerTabId: { type: Number },
 	status: { type: String },
 	folderId: { type: mongoose.Schema.Types.ObjectId, ref: 'folders-info', default: null },
+	// Manual arrangement order, distinct from `index` (which mirrors the
+	// browser's own tab-strip position and gets overwritten on every sync).
+	// Only drag-and-drop reordering touches this field.
+	order: { type: Number, default: 0 },
 })
 const Tabs = mongoose.model('tabs-info', tabsSchema)
 export default Tabs

@@ -6,6 +6,14 @@ interface CommandResponse {
 	error?: string;
 }
 
+function normalizeUrl(input: string): string {
+	const trimmed = input.trim();
+	if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)) {
+		return trimmed;
+	}
+	return `https://${trimmed}`;
+}
+
 export function useTabActions() {
 	const focusTab = (tab: TabTreeNode) => {
 		socket.emit(
@@ -31,13 +39,13 @@ export function useTabActions() {
 		);
 	};
 
-	// Note: newly created tabs always land unfiled (no folderId) — the
-	// extension creates a real browser tab, and folder placement isn't
-	// wired into that flow yet.
+	// Note: newly created tabs always land unfiled (no folderId) — folder
+	// placement isn't wired into tab *creation*, only into moving existing
+	// tabs afterward (see useTreeActions).
 	const createTab = (url: string) => {
 		socket.emit(
 			"tab:requestCreate",
-			{ url },
+			{ url: normalizeUrl(url) },
 			(response: CommandResponse) => {
 				if (!response?.success) {
 					console.error("Failed to create tab", response?.error);

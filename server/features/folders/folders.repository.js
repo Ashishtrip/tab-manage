@@ -51,9 +51,26 @@ const removeFolderEntry = async (folderId) => {
 	}
 };
 
+// Single-item drag-and-drop move: updates this folder's manual order and,
+// if it changed parents, its parentFolderId.
+const moveFolderEntry = async ({ id, order, parentFolderId }) => {
+	let status;
+	try {
+		status = await Folders.updateOne(
+			{ _id: id },
+			{ $set: { order, parentFolderId: parentFolderId ?? null } }
+		);
+	} catch (error) {
+		console.error(new Error("Couldn't move folder entry"), { cause: error });
+		return;
+	}
+	return status;
+};
+
 export {
 	createFolderEntry,
 	readFolderEntries,
 	renameFolderEntry,
 	removeFolderEntry,
+	moveFolderEntry,
 };

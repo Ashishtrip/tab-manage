@@ -14,6 +14,7 @@ export interface TabRecord {
 	openerTabId?: number;
 	status?: string;
 	folderId?: string | null;
+	order?: number;
 }
 
 /** Mirrors the Mongoose schema in folders.model.js */
@@ -22,7 +23,7 @@ export interface FolderRecord {
 	name: string;
 	windowId: number;
 	parentFolderId?: string | null;
-	index?: number;
+	order?: number;
 }
 
 export interface TabTreeNode extends TabRecord {
@@ -46,6 +47,15 @@ export interface CreationContext {
 	parentFolderId: string | null;
 }
 
+/** Payload for a drag-and-drop arrangement move. */
+export interface MoveEntryPayload {
+	id: number | string;
+	kind: "tab" | "folder";
+	order: number;
+	folderId?: string | null;
+	parentFolderId?: string | null;
+}
+
 interface TabTreeViewProps {
 	/** The entries for a single window (get this via tree[windowId] from the parent). */
 	entries: TreeEntry[];
@@ -55,8 +65,10 @@ interface TabTreeViewProps {
 	onSelectTab?: (tab: TabTreeNode) => void;
 	onDeleteTab?: (tab: TabTreeNode) => void;
 	onDeleteFolder?: (folder: FolderTreeNode) => void;
+	onRenameFolder?: (folder: FolderTreeNode, name: string) => void;
 	onCreateTab?: (context: CreationContext, url: string) => void;
 	onCreateFolder?: (context: CreationContext, name: string) => void;
+	onMoveEntry?: (move: MoveEntryPayload) => void;
 }
 
 function faviconUrl(url: string): string | null {
@@ -82,18 +94,27 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
 	);
 }
 
+// Flat, filled folder glyph — closer to Arc/Zen's soft rounded folder tiles
+// than a plain line-art outline.
 function FolderIcon() {
 	return (
-		<svg className="tab-tree-folder-icon" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+		<svg className="tab-tree-folder-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
 			<path
-				d="M2.5 5.3c0-.83.67-1.5 1.5-1.5h3.6l1.6 1.8H16c.83 0 1.5.67 1.5 1.5v6.6c0 .83-.67 1.5-1.5 1.5H4c-.83 0-1.5-.67-1.5-1.5V5.3Z"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="1.4"
-				strokeLinejoin="round"
+				d="M3 7.4C3 6.07 4.07 5 5.4 5h4.1l1.9 2.1h8.2c1.33 0 2.4 1.07 2.4 2.4v7.1c0 1.33-1.07 2.4-2.4 2.4H5.4C4.07 18.9 3 17.83 3 16.5V7.4Z"
+				fill="currentColor"
 			/>
 		</svg>
 	);
+}
+
+function dragPayload(e: React.DragEvent): { id: number | string; kind: "tab" | "folder" } | null {
+	try {
+		const raw = e.dataTransfer.getData("application/json");
+		if (!raw) return null;
+		return JSON.parse(raw);
+	} catch {
+		return null;
+	}
 }
 
 interface RowProps {
@@ -102,11 +123,21 @@ interface RowProps {
 	onSelectTab?: (tab: TabTreeNode) => void;
 	onDeleteTab?: (tab: TabTreeNode) => void;
 	onDeleteFolder?: (folder: FolderTreeNode) => void;
-	onContextMenuRequest: (e: React.MouseEvent, context: CreationContext) => void;
+	onContextMenuRequest: (e: React.MouseEvent, context: CreationContext, targetFolder: FolderTreeNode | null) => void;
+	onMoveEntry?: (move: MoveEntryPayload) => void;
 }
 
-function TreeRow({ node, depth, onSelectTab, onDeleteTab, onDeleteFolder, onContextMenuRequest }: RowProps) {
+function TreeRow({
+	node,
+	depth,
+	onSelectTab,
+	onDeleteTab,
+	onDeleteFolder,
+	onContextMenuRequest,
+	onMoveEntry,
+}: RowProps) {
 	const [expanded, setExpanded] = useState(true);
+	const [dragOver, setDragOver] = useState(false);
 	const hasChildren = node.children.length > 0;
 	const isFolder = node.type === "folder";
 	const favicon = !isFolder ? faviconUrl(node.url) : null;
@@ -141,7 +172,52 @@ function TreeRow({ node, depth, onSelectTab, onDeleteTab, onDeleteFolder, onCont
 		const context: CreationContext = isFolder
 			? { windowId: node.windowId, parentFolderId: node.id }
 			: { windowId: node.windowId, parentFolderId: node.folderId ?? null };
-		onContextMenuRequest(e, context);
+		onContextMenuRequest(e, context, isFolder ? node : null);
+	};
+
+	const handleDragStart = (e: React.DragEvent) => {
+		e.dataTransfer.setData("application/json", JSON.stringify({ id: node.id, kind: node.type }));
+		e.dataTransfer.effectAllowed = "move";
+	};
+
+	const handleDragOver = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setDragOver(true);
+	};
+
+	const handleDragLeave = () => setDragOver(false);
+
+	const handleDrop = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setDragOver(false);
+		const dragged = dragPayload(e);
+		if (!dragged || !onMoveEntry) return;
+		if (dragged.kind === node.type && dragged.id === node.id) return; // dropped on itself
+
+		if (isFolder) {
+			// Dropping onto a folder row moves the item inside it, appended last.
+			if (dragged.kind === "folder" && dragged.id === node.id) return; // can't nest a folder in itself
+			const maxOrder = node.children.reduce((max, c) => Math.max(max, c.order ?? 0), 0);
+			onMoveEntry({
+				id: dragged.id,
+				kind: dragged.kind,
+				order: maxOrder + 1,
+				folderId: dragged.kind === "tab" ? node.id : undefined,
+				parentFolderId: dragged.kind === "folder" ? node.id : undefined,
+			});
+		} else {
+			// Dropping onto a tab row inserts the dragged item just before it,
+			// at that tab's own level.
+			onMoveEntry({
+				id: dragged.id,
+				kind: dragged.kind,
+				order: (node.order ?? 0) - 0.5,
+				folderId: dragged.kind === "tab" ? node.folderId ?? null : undefined,
+				parentFolderId: dragged.kind === "folder" ? node.folderId ?? null : undefined,
+			});
+		}
 	};
 
 	const canDelete = isFolder ? !!onDeleteFolder : !!onDeleteTab;
@@ -149,10 +225,15 @@ function TreeRow({ node, depth, onSelectTab, onDeleteTab, onDeleteFolder, onCont
 	return (
 		<div className="tab-tree-branch">
 			<div
-				className="tab-tree-row"
+				className={`tab-tree-row${dragOver ? " tab-tree-row--drag-over" : ""}`}
 				style={{ paddingLeft: 8 + depth * 18 }}
 				onClick={handleRowClick}
 				onContextMenu={handleContextMenu}
+				draggable={!!onMoveEntry}
+				onDragStart={handleDragStart}
+				onDragOver={onMoveEntry ? handleDragOver : undefined}
+				onDragLeave={onMoveEntry ? handleDragLeave : undefined}
+				onDrop={onMoveEntry ? handleDrop : undefined}
 			>
 				<span className="tab-tree-chevron-slot" onClick={hasChildren ? handleChevronClick : undefined}>
 					{hasChildren && <ChevronIcon expanded={expanded} />}
@@ -208,6 +289,7 @@ function TreeRow({ node, depth, onSelectTab, onDeleteTab, onDeleteFolder, onCont
 							onDeleteTab={onDeleteTab}
 							onDeleteFolder={onDeleteFolder}
 							onContextMenuRequest={onContextMenuRequest}
+							onMoveEntry={onMoveEntry}
 						/>
 					))}
 				</div>
@@ -220,12 +302,13 @@ interface OpenMenuState {
 	x: number;
 	y: number;
 	context: CreationContext;
+	targetFolder: FolderTreeNode | null;
 }
 
-interface PendingCreate {
-	type: "tab" | "folder";
-	context: CreationContext;
-}
+type PendingModal =
+	| { kind: "create-tab"; context: CreationContext }
+	| { kind: "create-folder"; context: CreationContext }
+	| { kind: "rename-folder"; folder: FolderTreeNode };
 
 function PlusIcon() {
 	return (
@@ -242,28 +325,42 @@ export default function TabTreeView({
 	onSelectTab,
 	onDeleteTab,
 	onDeleteFolder,
+	onRenameFolder,
 	onCreateTab,
 	onCreateFolder,
+	onMoveEntry,
 }: TabTreeViewProps) {
 	const [menu, setMenu] = useState<OpenMenuState | null>(null);
-	const [pendingCreate, setPendingCreate] = useState<PendingCreate | null>(null);
+	const [pendingModal, setPendingModal] = useState<PendingModal | null>(null);
+	const [rootDragOver, setRootDragOver] = useState(false);
 
-	const openMenu = (e: React.MouseEvent, context: CreationContext) => {
-		setMenu({ x: e.clientX, y: e.clientY, context });
+	const openMenu = (e: React.MouseEvent, context: CreationContext, targetFolder: FolderTreeNode | null) => {
+		setMenu({ x: e.clientX, y: e.clientY, context, targetFolder });
 	};
 
 	const handleAddClick = (e: React.MouseEvent<HTMLButtonElement>) => {
 		const rect = e.currentTarget.getBoundingClientRect();
-		setMenu({ x: rect.left, y: rect.bottom + 4, context: { windowId, parentFolderId: null } });
+		setMenu({
+			x: rect.left,
+			y: rect.bottom + 4,
+			context: { windowId, parentFolderId: null },
+			targetFolder: null,
+		});
 	};
 
 	const menuItems: ContextMenuItem[] = menu
 		? [
 				...(onCreateTab
-					? [{ label: "Add tab", onSelect: () => setPendingCreate({ type: "tab", context: menu.context }) }]
+					? [{ label: "Add tab", onSelect: () => setPendingModal({ kind: "create-tab", context: menu.context }) }]
 					: []),
 				...(onCreateFolder
-					? [{ label: "Create folder", onSelect: () => setPendingCreate({ type: "folder", context: menu.context }) }]
+					? [{ label: "Create folder", onSelect: () => setPendingModal({ kind: "create-folder", context: menu.context }) }]
+					: []),
+				...(menu.targetFolder && onRenameFolder
+					? [{ label: "Rename folder", onSelect: () => setPendingModal({ kind: "rename-folder", folder: menu.targetFolder! }) }]
+					: []),
+				...(menu.targetFolder && onDeleteFolder
+					? [{ label: "Delete folder", onSelect: () => onDeleteFolder(menu.targetFolder!) }]
 					: []),
 			]
 		: [];
@@ -271,7 +368,29 @@ export default function TabTreeView({
 	const handlePanelContextMenu = (e: React.MouseEvent) => {
 		if (e.target !== e.currentTarget) return; // let row-level handlers own their own right-clicks
 		e.preventDefault();
-		openMenu(e, { windowId, parentFolderId: null });
+		openMenu(e, { windowId, parentFolderId: null }, null);
+	};
+
+	const handleRootDragOver = (e: React.DragEvent) => {
+		if (e.target !== e.currentTarget) return;
+		e.preventDefault();
+		setRootDragOver(true);
+	};
+
+	const handleRootDrop = (e: React.DragEvent) => {
+		if (e.target !== e.currentTarget) return;
+		e.preventDefault();
+		setRootDragOver(false);
+		const dragged = dragPayload(e);
+		if (!dragged || !onMoveEntry) return;
+		const maxOrder = entries.reduce((max, n) => Math.max(max, n.order ?? 0), 0);
+		onMoveEntry({
+			id: dragged.id,
+			kind: dragged.kind,
+			order: maxOrder + 1,
+			folderId: dragged.kind === "tab" ? null : undefined,
+			parentFolderId: dragged.kind === "folder" ? null : undefined,
+		});
 	};
 
 	return (
@@ -287,7 +406,13 @@ export default function TabTreeView({
 				</div>
 			)}
 
-			<div className="tab-tree" onContextMenu={handlePanelContextMenu}>
+			<div
+				className={`tab-tree${rootDragOver ? " tab-tree--drag-over" : ""}`}
+				onContextMenu={handlePanelContextMenu}
+				onDragOver={onMoveEntry ? handleRootDragOver : undefined}
+				onDragLeave={onMoveEntry ? () => setRootDragOver(false) : undefined}
+				onDrop={onMoveEntry ? handleRootDrop : undefined}
+			>
 				{entries.length === 0 ? (
 					<div className="tab-tree-empty">No tabs in this window.</div>
 				) : (
@@ -300,6 +425,7 @@ export default function TabTreeView({
 							onDeleteTab={onDeleteTab}
 							onDeleteFolder={onDeleteFolder}
 							onContextMenuRequest={openMenu}
+							onMoveEntry={onMoveEntry}
 						/>
 					))
 				)}
@@ -308,29 +434,43 @@ export default function TabTreeView({
 					<ContextMenu x={menu.x} y={menu.y} items={menuItems} onClose={() => setMenu(null)} />
 				)}
 
-				{pendingCreate?.type === "tab" && (
+				{pendingModal?.kind === "create-tab" && (
 					<Modal
 						title="Open a new tab"
 						placeholder="https://example.com"
 						confirmLabel="Open"
 						onSubmit={(url) => {
-							onCreateTab?.(pendingCreate.context, url);
-							setPendingCreate(null);
+							onCreateTab?.(pendingModal.context, url);
+							setPendingModal(null);
 						}}
-						onCancel={() => setPendingCreate(null)}
+						onCancel={() => setPendingModal(null)}
 					/>
 				)}
 
-				{pendingCreate?.type === "folder" && (
+				{pendingModal?.kind === "create-folder" && (
 					<Modal
 						title="New folder"
 						placeholder="Folder name"
 						confirmLabel="Create"
 						onSubmit={(name) => {
-							onCreateFolder?.(pendingCreate.context, name);
-							setPendingCreate(null);
+							onCreateFolder?.(pendingModal.context, name);
+							setPendingModal(null);
 						}}
-						onCancel={() => setPendingCreate(null)}
+						onCancel={() => setPendingModal(null)}
+					/>
+				)}
+
+				{pendingModal?.kind === "rename-folder" && (
+					<Modal
+						title="Rename folder"
+						placeholder="Folder name"
+						confirmLabel="Rename"
+						initialValue={pendingModal.folder.name}
+						onSubmit={(name) => {
+							onRenameFolder?.(pendingModal.folder, name);
+							setPendingModal(null);
+						}}
+						onCancel={() => setPendingModal(null)}
 					/>
 				)}
 			</div>
