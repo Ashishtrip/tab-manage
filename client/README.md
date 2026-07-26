@@ -51,11 +51,19 @@ Tab-Manager/
 
 ```bash
 # Clone the repo
-git clone https://github.com/whitespacecowboy/Tab-Manager.git
-cd Tab-Manager
-
-# Install dependencies
+git clone https://github.com/whitespacecowboy/tab-manage.git
+cd tab-manage
 npm install
+
+cd client
+npm intall
+
+cd server
+nmp install 
+
+cd ..
+npm run dev
+
 ```
 
 ### Running the App
