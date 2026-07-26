@@ -56,7 +56,7 @@ cd tab-manage
 npm install
 
 cd client
-npm intall
+npm install
 
 cd server
 nmp install 
