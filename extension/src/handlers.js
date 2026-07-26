@@ -79,6 +79,17 @@ async function tabCreateHandler(payload) {
 	}
 }
 
+async function tabFocusHandler(payload) {
+	try {
+		await browser.tabs.update(payload.tabId, { active: true });
+		if (payload.windowId != null) {
+			await browser.windows.update(payload.windowId, { focused: true });
+		}
+	} catch (error) {
+		console.error(new Error("Failed to execute focus command"), { cause: error });
+	}
+}
+
 async function getAllTabs() {
 	try {
 		const output = await browser.tabs.query( { currentWindow: true })
@@ -105,5 +116,6 @@ export {
 	tabDeletedHandler,
 	tabDeleteHandler,
 	tabCreateHandler,
+	tabFocusHandler,
 	getAllTabs
 }

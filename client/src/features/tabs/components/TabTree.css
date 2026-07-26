@@ -103,3 +103,30 @@
 	color: #55585e;
 	text-decoration: underline;
 }
+
+.tab-tree-title {
+	flex: 1;
+	min-width: 0;
+}
+
+.tab-tree-delete {
+	flex-shrink: 0;
+	background: transparent;
+	border: none;
+	color: #9a9ea5;
+	font-size: 14px;
+	line-height: 1;
+	cursor: pointer;
+	padding: 2px 6px;
+	border-radius: 3px;
+	visibility: hidden;
+}
+
+.tab-tree-row:hover .tab-tree-delete {
+	visibility: visible;
+}
+
+.tab-tree-delete:hover {
+	background: #e6e6e7;
+	color: #2a2c30;
+}

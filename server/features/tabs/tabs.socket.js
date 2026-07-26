@@ -1,4 +1,4 @@
-import { createTabEntry, updateTabEntry, removeTabEntry} from './tabs.repository.js';
+import { createTabEntry, updateTabEntry, removeTabEntry } from './tabs.repository.js';
 import { getTabsTree, sync } from './tabs.service.js'
 
 export function registerTabHandlers(io, socket) {
@@ -52,6 +52,41 @@ export function registerTabHandlers(io, socket) {
 			io.emit('tree:updated');
 		} catch (error) {
 			console.error(new Error("Failed to sync tabs"), { cause: error });
+			callback?.({ success: false, error: error.message });
+		}
+	});
+
+	// --- Client-initiated commands, relayed to the extension ---
+	// The extension executes the real browser.tabs.* call, then reports back
+	// via tab:created/tab:updated/tab:deleted above, which updates the DB
+	// and broadcasts tree:updated. These handlers don't touch the DB directly.
+
+	socket.on('tab:requestFocus', async ({ id, windowId }, callback) => {
+		try {
+			io.emit('command:focus', { tabId: id, windowId });
+			callback?.({ success: true });
+		} catch (error) {
+			console.error(new Error("Failed to relay focus command"), { cause: error });
+			callback?.({ success: false, error: error.message });
+		}
+	});
+
+	socket.on('tab:requestDelete', async ({ id }, callback) => {
+		try {
+			io.emit('command:delete', { tabId: id });
+			callback?.({ success: true });
+		} catch (error) {
+			console.error(new Error("Failed to relay delete command"), { cause: error });
+			callback?.({ success: false, error: error.message });
+		}
+	});
+
+	socket.on('tab:requestCreate', async ({ url }, callback) => {
+		try {
+			io.emit('command:create', { url });
+			callback?.({ success: true });
+		} catch (error) {
+			console.error(new Error("Failed to relay create command"), { cause: error });
 			callback?.({ success: false, error: error.message });
 		}
 	});

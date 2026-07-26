@@ -5,6 +5,7 @@ import {
 	tabCreatedHandler,
 	tabDeleteHandler,
 	tabCreateHandler,
+	tabFocusHandler,
 	getAllTabs
 } from "./handlers.js";
 
@@ -28,6 +29,10 @@ const tabCreateListner = () => {
 	socket.on("command:create", tabCreateHandler)
 }
 
+const tabFocusListner = () => {
+	socket.on("command:focus", tabFocusHandler)
+}
+
 const onInstall = () => {
 	browser.runtime.onInstalled.addListener(getAllTabs);
 }
@@ -46,6 +51,7 @@ const start = () => {
 	tabRemovedListener()
 	tabDeleteListner()
 	tabCreateListner()
+	tabFocusListner()
 }
 
 export {

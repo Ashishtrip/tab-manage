@@ -15,7 +15,7 @@ export interface TabRecord {
 	status?: string;
 }
 
-/** What getTabsTree() in tabs.repo.js returns for a single node */
+/** What getTabsTree() in tabs.repository.js returns for a single node */
 export interface TabTreeNode extends TabRecord {
 	children: TabTreeNode[];
 }
@@ -25,8 +25,10 @@ export type TabTree = Record<string, TabTreeNode[]>;
 
 interface TabTreeViewProps {
 	tree: TabTree;
-	/** Called when a tab's title/row is clicked. Defaults to opening the url in a new tab. */
+	/** Called when a tab's title is clicked. Defaults to opening the url in a new browser tab. */
 	onSelectTab?: (tab: TabTreeNode) => void;
+	/** Called when a tab's delete button is clicked. If omitted, no delete button is rendered. */
+	onDeleteTab?: (tab: TabTreeNode) => void;
 }
 
 // Deterministic palette for groupId -> dot shade. We don't have Chrome's
@@ -49,9 +51,10 @@ interface RowProps {
 	isLast: boolean;
 	ancestorsLast: boolean[];
 	onSelectTab?: (tab: TabTreeNode) => void;
+	onDeleteTab?: (tab: TabTreeNode) => void;
 }
 
-function TabTreeRow({ node, isLast, ancestorsLast, onSelectTab }: RowProps) {
+function TabTreeRow({ node, isLast, ancestorsLast, onSelectTab, onDeleteTab }: RowProps) {
 	const [expanded, setExpanded] = useState(true);
 	const hasChildren = node.children.length > 0;
 	const dotColor = groupColor(node.groupId);
@@ -70,6 +73,11 @@ function TabTreeRow({ node, isLast, ancestorsLast, onSelectTab }: RowProps) {
 		} else {
 			window.open(node.url, "_blank", "noopener,noreferrer");
 		}
+	};
+
+	const handleDeleteClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		onDeleteTab?.(node);
 	};
 
 	return (
@@ -107,6 +115,18 @@ function TabTreeRow({ node, isLast, ancestorsLast, onSelectTab }: RowProps) {
 				>
 					{node.title || node.url}
 				</span>
+
+				{onDeleteTab && (
+					<button
+						type="button"
+						className="tab-tree-delete"
+						onClick={handleDeleteClick}
+						title="Close tab"
+						aria-label={`Close ${node.title || node.url}`}
+					>
+						&times;
+					</button>
+				)}
 			</div>
 
 			{expanded && hasChildren && (
@@ -118,6 +138,7 @@ function TabTreeRow({ node, isLast, ancestorsLast, onSelectTab }: RowProps) {
 							isLast={i === node.children.length - 1}
 							ancestorsLast={[...ancestorsLast, isLast]}
 							onSelectTab={onSelectTab}
+							onDeleteTab={onDeleteTab}
 						/>
 					))}
 				</div>
@@ -126,7 +147,7 @@ function TabTreeRow({ node, isLast, ancestorsLast, onSelectTab }: RowProps) {
 	);
 }
 
-export default function TabTreeView({ tree, onSelectTab }: TabTreeViewProps) {
+export default function TabTreeView({ tree, onSelectTab, onDeleteTab }: TabTreeViewProps) {
 	const windowIds = Object.keys(tree);
 
 	if (windowIds.length === 0) {
@@ -152,6 +173,7 @@ export default function TabTreeView({ tree, onSelectTab }: TabTreeViewProps) {
 								isLast={i === roots.length - 1}
 								ancestorsLast={[]}
 								onSelectTab={onSelectTab}
+								onDeleteTab={onDeleteTab}
 							/>
 						))}
 					</div>
@@ -162,5 +184,6 @@ export default function TabTreeView({ tree, onSelectTab }: TabTreeViewProps) {
 }
 
 function countTabs(nodes: TabTreeNode[]): number {
-	return nodes.reduce((sum, n) => sum + 1 + countTabs(n.children), 0);
+	if (!Array.isArray(nodes)) return 0;
+	return nodes.reduce((sum, n) => sum + 1 + countTabs(n.children ?? []), 0);
 }
