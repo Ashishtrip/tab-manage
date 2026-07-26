@@ -1,4 +1,4 @@
-import TabTreeView from "./features/tabs/components/TabTree";
+import AppLayout from "./features/tabs/components/AppLayout";
 import { useTabTree } from "./features/tabs/hooks/useTabTree";
 import { useTabActions } from "./features/tabs/hooks/useTabActions";
 import { useFolderActions } from "./features/tabs/hooks/useFolderActions";
@@ -9,17 +9,17 @@ function App() {
 	const { createFolder, deleteFolder } = useFolderActions();
 
 	if (loading) {
-		return <div>Loading tabs...</div>;
+		return <div style={{ padding: 20, color: "#a0a0a0" }}>Loading tabs...</div>;
 	}
 
 	return (
-		<TabTreeView
+		<AppLayout
 			tree={tree}
 			onSelectTab={focusTab}
 			onDeleteTab={deleteTab}
 			onDeleteFolder={deleteFolder}
-			onCreateTab={createTab}
-			onCreateFolder={createFolder}
+			onCreateTab={(_, url) => createTab(url)}
+			onCreateFolder={(context, name) => createFolder(context, name)}
 		/>
 	);
 }

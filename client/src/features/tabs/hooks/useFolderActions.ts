@@ -8,9 +8,7 @@ interface CommandResponse {
 }
 
 export function useFolderActions() {
-	const createFolder = (context: CreationContext) => {
-		const name = window.prompt("Folder name:");
-		if (!name) return;
+	const createFolder = (context: CreationContext, name: string) => {
 		socket.emit(
 			"folder:create",
 			{ name, windowId: context.windowId, parentFolderId: context.parentFolderId },

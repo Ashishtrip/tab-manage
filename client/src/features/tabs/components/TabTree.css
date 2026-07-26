@@ -1,142 +1,119 @@
 .tab-tree {
-	font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-	font-size: 13px;
-	line-height: 1.6;
-	background: #ffffff;
-	color: #2a2c30;
-	padding: 16px 20px;
+	font-family: var(--ui-font);
+	font-size: 13.5px;
+	color: var(--text-primary);
+	background: var(--app-bg);
+	padding: 14px 10px;
+	min-height: 100%;
 	position: relative;
 }
 
 .tab-tree-empty {
-	font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+	color: var(--text-faint);
+	padding: 10px 14px;
 	font-size: 13px;
-	color: #8a8f98;
-	padding: 12px 16px;
 }
 
-.tab-tree-window + .tab-tree-window {
-	margin-top: 18px;
-}
-
-.tab-tree-window-header {
-	color: #6b7078;
-	font-weight: 600;
-	letter-spacing: 0.02em;
-	text-transform: uppercase;
-	font-size: 11px;
-	margin-bottom: 6px;
-	display: flex;
-	gap: 8px;
-	align-items: baseline;
-	padding: 4px 4px;
-	border-radius: 4px;
-}
-
-.tab-tree-window-count {
-	color: #a4a9b0;
-	font-weight: 400;
-	text-transform: none;
+.tab-tree-branch {
+	position: relative;
 }
 
 .tab-tree-row {
 	display: flex;
 	align-items: center;
-	white-space: nowrap;
-	border-radius: 4px;
-	padding: 1px 4px;
-}
-
-.tab-tree-row--toggleable {
+	height: 30px;
+	border-radius: 6px;
 	cursor: pointer;
+	white-space: nowrap;
 }
 
 .tab-tree-row:hover {
-	background: #f2f2f3;
+	background: var(--hover-bg);
 }
 
-.tab-tree-guides {
-	color: #c8cace;
-	white-space: pre;
-}
-
-.tab-tree-caret {
-	display: inline-block;
-	width: 14px;
-	color: #9a9ea5;
+.tab-tree-chevron-slot {
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	flex-shrink: 0;
+	margin-right: 2px;
+	color: var(--text-faint);
+	border-radius: 4px;
+}
+
+.tab-tree-chevron-slot:hover {
+	background: var(--border-color);
+}
+
+.tab-tree-chevron {
+	transition: transform 0.12s ease;
+}
+
+.tab-tree-chevron--expanded {
+	transform: rotate(90deg);
 }
 
 .tab-tree-folder-icon {
-	color: #6b7078;
-	margin-right: 6px;
+	color: var(--accent);
+	margin-right: 7px;
 	flex-shrink: 0;
 }
 
 .tab-tree-favicon {
-	width: 13px;
-	height: 13px;
-	margin-right: 6px;
+	width: 15px;
+	height: 15px;
+	margin-right: 7px;
 	flex-shrink: 0;
-	border-radius: 2px;
+	border-radius: 3px;
 }
 
 .tab-tree-favicon--placeholder {
-	background: #d8dade;
+	background: var(--border-color);
 }
 
-.tab-tree-group-dot {
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	margin-right: 6px;
-	flex-shrink: 0;
+.tab-tree-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex: 1;
+	min-width: 0;
+	color: var(--text-primary);
 }
 
 .tab-tree-status {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	margin-right: 6px;
+	margin-left: 8px;
+	margin-right: 8px;
 	flex-shrink: 0;
-	border: 1px solid #9a9ea5;
+	border: 1px solid var(--text-faint);
 	background: transparent;
 }
 
 .tab-tree-status--complete {
-	background: #2a2c30;
-	border-color: #2a2c30;
+	background: var(--text-muted);
+	border-color: var(--text-muted);
 }
 
 .tab-tree-status--loading {
-	background: #c8cace;
-	border-color: #9a9ea5;
-}
-
-.tab-tree-title {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	color: #2a2c30;
-	cursor: pointer;
-	flex: 1;
-	min-width: 0;
-}
-
-.tab-tree-title:hover {
-	color: #55585e;
-	text-decoration: underline;
+	background: var(--accent);
+	border-color: var(--accent);
 }
 
 .tab-tree-delete {
 	flex-shrink: 0;
 	background: transparent;
 	border: none;
-	color: #9a9ea5;
-	font-size: 14px;
+	color: var(--text-faint);
+	font-size: 15px;
 	line-height: 1;
 	cursor: pointer;
-	padding: 2px 6px;
-	border-radius: 3px;
+	width: 20px;
+	height: 20px;
+	border-radius: 5px;
+	margin-right: 6px;
 	visibility: hidden;
 }
 
@@ -145,6 +122,55 @@
 }
 
 .tab-tree-delete:hover {
-	background: #e6e6e7;
-	color: #2a2c30;
+	background: var(--border-color);
+	color: var(--text-primary);
+}
+
+/* Vertical guide line connecting a node to its children, Obsidian-style */
+.tab-tree-children {
+	border-left: 1px solid var(--border-color);
+	padding-left: 10px;
+}
+
+.tab-tree-panel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.tab-tree-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 16px 10px;
+	flex-shrink: 0;
+}
+
+.tab-tree-panel-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.tab-tree-add-button {
+	width: 26px;
+	height: 26px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: none;
+	border-radius: 6px;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.tab-tree-add-button:hover {
+	background: var(--hover-bg);
+	color: var(--text-primary);
+}
+
+.tab-tree {
+	flex: 1;
+	overflow-y: auto;
 }
