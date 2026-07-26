@@ -62,20 +62,13 @@ cd server
 nmp install 
 
 cd ..
-npm run dev
 
 ```
 
 ### Running the App
 
-```bash
-# Start the backend
-cd server
-npm run dev
-
-# Start the frontend
-cd client
-npm run dev
+```
+npm run dev # from your tab-manage directory
 ```
 
 Then load the extension:
