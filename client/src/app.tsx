@@ -1,16 +1,14 @@
-import { useEffect, useState } from "react";
-import TabTreeView, { type TabTree } from "./features/tabs/components/TabTree";
+import TabTreeView from "./features/tabs/components/TabTree";
+import { useTabTree } from "./features/tabs/hooks/useTabTree";
 
 function App() {
-  const [tree, setTree] = useState<TabTree>({});
+	const { tree, loading } = useTabTree();
 
-  useEffect(() => {
-    fetch("/api/tabs/tree")
-      .then((res) => res.json())
-      .then(setTree);
-  }, []);
+	if (loading) {
+		return <div>Loading tabs...</div>;
+	}
 
-  return <TabTreeView tree={tree} />;
+	return <TabTreeView tree={tree} />;
 }
-export default App;
 
+export default App;
