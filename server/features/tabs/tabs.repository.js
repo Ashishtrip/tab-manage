@@ -81,11 +81,64 @@ const deleteAllTabEntries = async () => {
 	}
 };
 
+// Upserts browser-owned fields only (index/windowId/groupId/url/title/openerTabId/status).
+// Deliberately never touches folderId, so a tab's folder placement survives a resync.
+const upsertManyTabEntries = async (arr) => {
+	if (!arr || arr.length === 0) {
+		return;
+	}
+	const operations = arr.map((tab) => ({
+		updateOne: {
+			filter: { id: tab.id },
+			update: {
+				$set: {
+					index: tab.index,
+					windowId: tab.windowId,
+					groupId: tab.groupId,
+					url: tab.url,
+					title: tab.title,
+					openerTabId: tab.openerTabId,
+					status: tab.status,
+				},
+				$setOnInsert: { id: tab.id },
+			},
+			upsert: true,
+		},
+	}));
+	let status;
+	try {
+		status = await Tabs.bulkWrite(operations);
+	} catch (error) {
+		console.error(new Error("Couldn't upsert tab entries"), { cause: error });
+		return;
+	}
+	return status;
+};
+
+// Removes tabs that are no longer open, scoped only to the windows we just
+// synced — so a partial sync (e.g. currentWindow-only) never wipes out tabs
+// belonging to other windows we didn't hear about this time.
+const removeStaleTabEntries = async (windowIds, keepIds) => {
+	let status;
+	try {
+		status = await Tabs.deleteMany({
+			windowId: { $in: windowIds },
+			id: { $nin: keepIds },
+		});
+	} catch (error) {
+		console.error(new Error("Couldn't remove stale tab entries"), { cause: error });
+		return;
+	}
+	return status;
+};
+
 export {
 	removeTabEntry,
 	updateTabEntry,
 	createTabEntry,
 	readTabEntry,
 	deleteAllTabEntries,
-	createManyTabEntry 
+	createManyTabEntry,
+	upsertManyTabEntries,
+	removeStaleTabEntries
 }

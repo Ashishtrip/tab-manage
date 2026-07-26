@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { registerTabHandlers } from "../features/tabs/tabs.socket.js";
+import { registerFolderHandlers } from "../features/folders/folders.socket.js";
 
 export default function initializeSocket(server) {
 	const io = new Server(server, {
@@ -10,6 +11,7 @@ export default function initializeSocket(server) {
 		console.log("Client connected:", socket.id);
 
 		registerTabHandlers(io, socket);
+		registerFolderHandlers(io, socket);
 
 		socket.on("disconnect", () => {
 			console.log("Client disconnected:", socket.id);

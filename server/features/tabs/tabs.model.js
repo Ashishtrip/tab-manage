@@ -1,5 +1,4 @@
 import mongoose from "mongoose"
-
 const tabsSchema = new mongoose.Schema({
 	id: { type: Number, required: true },
 	index: { type: Number, required: true },
@@ -9,7 +8,7 @@ const tabsSchema = new mongoose.Schema({
 	title: { type: String, required: true },
 	openerTabId: { type: Number },
 	status: { type: String },
-}) 
-
+	folderId: { type: mongoose.Schema.Types.ObjectId, ref: 'folders-info', default: null },
+})
 const Tabs = mongoose.model('tabs-info', tabsSchema)
 export default Tabs

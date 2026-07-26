@@ -31,7 +31,13 @@ export function useTabActions() {
 		);
 	};
 
-	const createTab = (url: string) => {
+	// Note: newly created tabs always land unfiled (no folderId) — the
+	// extension creates a real browser tab, and folder placement isn't
+	// wired into that flow yet. Drag-and-drop into a folder is a separate
+	// feature for later.
+	const createTab = () => {
+		const url = window.prompt("URL to open:");
+		if (!url) return;
 		socket.emit(
 			"tab:requestCreate",
 			{ url },
