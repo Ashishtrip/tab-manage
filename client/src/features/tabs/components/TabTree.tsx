@@ -145,7 +145,7 @@ function TreeRow({
 	onMoveEntry,
 }: RowProps) {
 	const [expanded, setExpanded] = useState(true);
-	const [dragOver, setDragOver] = useState(false);
+	const [dropZone, setDropZone] = useState<"before" | "after" | "inside" | null>(null);
 	const hasChildren = node.children.length > 0;
 	const isFolder = node.type === "folder";
 	const favicon = !isFolder ? faviconUrl(node.url) : null;
@@ -192,46 +192,85 @@ function TreeRow({
 	const handleDragOver = (e: React.DragEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
-		setDragOver(true);
+		
+		const rect = e.currentTarget.getBoundingClientRect();
+		const y = e.clientY - rect.top;
+		const height = rect.height;
+
+		if (isFolder) {
+			if (y < height * 0.25) {
+				setDropZone("before");
+			} else if (y > height * 0.75) {
+				setDropZone("after");
+			} else {
+				setDropZone("inside");
+			}
+		} else {
+			if (y < height * 0.5) {
+				setDropZone("before");
+			} else {
+				setDropZone("after");
+			}
+		}
 	};
 
-	const handleDragLeave = () => setDragOver(false);
+	const handleDragLeave = () => setDropZone(null);
 
 	const handleDrop = (e: React.DragEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
-		setDragOver(false);
+		const zone = dropZone;
+		setDropZone(null);
+
 		const dragged = dragPayload(e);
 		if (!dragged || !onMoveEntry) return;
 		if (dragged.kind === node.type && dragged.id === node.id) return;
 
 		if (isFolder) {
 			if (dragged.kind === "folder" && dragged.id === node.id) return;
-			const maxOrder = node.children.reduce((max, c) => Math.max(max, c.order ?? 0), 0);
-			onMoveEntry({
-				id: dragged.id,
-				kind: dragged.kind,
-				order: maxOrder + 1,
-				folderId: dragged.kind === "tab" ? node.id : undefined,
-				parentFolderId: dragged.kind === "folder" ? node.id : undefined,
-			});
+
+			if (zone === "inside") {
+				const maxOrder = node.children.reduce((max, c) => Math.max(max, c.order ?? 0), 0);
+				onMoveEntry({
+					id: dragged.id,
+					kind: dragged.kind,
+					order: maxOrder + 1,
+					folderId: dragged.kind === "tab" ? node.id : undefined,
+					parentFolderId: dragged.kind === "folder" ? node.id : undefined,
+				});
+			} else {
+				const orderOffset = zone === "before" ? -0.5 : 0.5;
+				// node is folder, so its parent is node.parentFolderId
+				const targetFolderId = node.parentFolderId;
+				onMoveEntry({
+					id: dragged.id,
+					kind: dragged.kind,
+					order: (node.order ?? 0) + orderOffset,
+					folderId: dragged.kind === "tab" ? targetFolderId ?? null : undefined,
+					parentFolderId: dragged.kind === "folder" ? targetFolderId ?? null : undefined,
+				});
+			}
 		} else {
+			const orderOffset = zone === "before" ? -0.5 : 0.5;
+			// node is tab, so its parent is node.folderId
+			const targetFolderId = node.folderId;
 			onMoveEntry({
 				id: dragged.id,
 				kind: dragged.kind,
-				order: (node.order ?? 0) - 0.5,
-				folderId: dragged.kind === "tab" ? node.folderId ?? null : undefined,
-				parentFolderId: dragged.kind === "folder" ? node.folderId ?? null : undefined,
+				order: (node.order ?? 0) + orderOffset,
+				folderId: dragged.kind === "tab" ? targetFolderId ?? null : undefined,
+				parentFolderId: dragged.kind === "folder" ? targetFolderId ?? null : undefined,
 			});
 		}
 	};
 
 	const canDelete = isFolder ? !!onDeleteFolder : !!onDeleteTab;
+	const dropClass = dropZone ? ` tab-tree-row--drop-${dropZone}` : "";
 
 	return (
 		<div className="tab-tree-branch">
 			<div
-				className={`tab-tree-row${dragOver ? " tab-tree-row--drag-over" : ""}`}
+				className={`tab-tree-row${dropClass}`}
 				style={{ paddingLeft: 8 + depth * 18 }}
 				onClick={handleRowClick}
 				onContextMenu={handleContextMenu}
