@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import WindowSidebar from "../../windows/components/WindowSidebar";
 import SearchResults from "./SearchResults";
 import Modal from "./Modal";
+import MindMap from "./MindMap";
 import TabTreeView, {
 	type TabTree,
 	type TabTreeNode,
@@ -12,6 +13,8 @@ import TabTreeView, {
 import { searchTree } from "../treeUtils";
 import "../../../styles/theme.css";
 import "./AppLayout.css";
+
+type ViewMode = "tree" | "mindmap";
 
 interface AppLayoutProps {
 	tree: TabTree;
@@ -48,6 +51,35 @@ function NewFolderIcon() {
 	);
 }
 
+function ListViewIcon() {
+	return (
+		<svg viewBox="0 0 18 18" width="15" height="15" aria-hidden="true">
+			<circle cx="3" cy="4.5" r="1.1" fill="currentColor" />
+			<circle cx="3" cy="9" r="1.1" fill="currentColor" />
+			<circle cx="3" cy="13.5" r="1.1" fill="currentColor" />
+			<line x1="6.4" y1="4.5" x2="15" y2="4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+			<line x1="6.4" y1="9" x2="15" y2="9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+			<line x1="6.4" y1="13.5" x2="15" y2="13.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+		</svg>
+	);
+}
+
+function MindMapViewIcon() {
+	return (
+		<svg viewBox="0 0 18 18" width="15" height="15" aria-hidden="true">
+			<circle cx="9" cy="9" r="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+			<circle cx="3" cy="3.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+			<circle cx="15" cy="3.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+			<circle cx="3" cy="14.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+			<circle cx="15" cy="14.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+			<line x1="7.6" y1="7.7" x2="4.1" y2="4.5" stroke="currentColor" strokeWidth="1.2" />
+			<line x1="10.4" y1="7.7" x2="13.9" y2="4.5" stroke="currentColor" strokeWidth="1.2" />
+			<line x1="7.6" y1="10.3" x2="4.1" y2="13.5" stroke="currentColor" strokeWidth="1.2" />
+			<line x1="10.4" y1="10.3" x2="13.9" y2="13.5" stroke="currentColor" strokeWidth="1.2" />
+		</svg>
+	);
+}
+
 function FilterIcon() {
 	return (
 		<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
@@ -75,6 +107,7 @@ export default function AppLayout({
 	const [activeWindowId, setActiveWindowId] = useState<string | null>(windowIds[0] ?? null);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+	const [viewMode, setViewMode] = useState<ViewMode>("tree");
 
 	useEffect(() => {
 		if (activeWindowId && windowIds.includes(activeWindowId)) return;
@@ -108,6 +141,26 @@ export default function AppLayout({
 							onChange={(e) => setSearchQuery(e.target.value)}
 						/>
 					</div>
+					<div className="app-view-toggle" role="group" aria-label="View mode">
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "tree" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("tree")}
+							disabled={isSearching}
+							title="List view"
+						>
+							<ListViewIcon />
+						</button>
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "mindmap" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("mindmap")}
+							disabled={isSearching}
+							title="Mind map view"
+						>
+							<MindMapViewIcon />
+						</button>
+					</div>
 					<button
 						type="button"
 						className="app-new-folder-button"
@@ -128,6 +181,14 @@ export default function AppLayout({
 						windowIds={windowIds}
 						onSelectTab={onSelectTab}
 						onSelectWindow={handleSelectWindow}
+					/>
+				) : activeWindowId && viewMode === "mindmap" ? (
+					<MindMap
+						entries={entries}
+						windowId={Number(activeWindowId)}
+						onSelectTab={onSelectTab}
+						onDeleteTab={onDeleteTab}
+						onDeleteFolder={onDeleteFolder}
 					/>
 				) : activeWindowId ? (
 					<TabTreeView
