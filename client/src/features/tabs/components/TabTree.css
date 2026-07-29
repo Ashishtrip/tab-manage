@@ -32,16 +32,39 @@
 	border-radius: 7px;
 	cursor: pointer;
 	white-space: nowrap;
+	position: relative;
+	transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .tab-tree-row:hover {
 	background: var(--hover-bg);
 }
 
-.tab-tree-row--drag-over {
-	background: var(--drop-bg);
-	outline: 1px solid var(--accent);
-	outline-offset: -1px;
+.tab-tree-row--drop-inside {
+	background: color-mix(in srgb, var(--accent) 15%, transparent);
+	outline: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+	transform: scale(0.98);
+}
+
+.tab-tree-row--drop-before::before,
+.tab-tree-row--drop-after::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background-color: var(--accent);
+	border-radius: 2px;
+	z-index: 10;
+	pointer-events: none;
+}
+
+.tab-tree-row--drop-before::before {
+	top: -1px;
+}
+
+.tab-tree-row--drop-after::after {
+	bottom: -1px;
 }
 
 .tab-tree-chevron-slot {

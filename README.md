@@ -59,7 +59,7 @@ cd client
 npm install
 
 cd server
-nmp install 
+npm install 
 
 cd ..
 
