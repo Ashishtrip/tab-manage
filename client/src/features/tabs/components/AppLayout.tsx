@@ -82,7 +82,6 @@ export default function AppLayout({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [windowIds.join(",")]);
 
-	const activeIndex = activeWindowId ? windowIds.indexOf(activeWindowId) : -1;
 	const entries = activeWindowId ? tree[activeWindowId] ?? [] : [];
 	const isSearching = searchQuery.trim().length > 0;
 	const searchResults = isSearching ? searchTree(tree, searchQuery) : [];

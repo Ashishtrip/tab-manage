@@ -14,10 +14,10 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set: any) => ({
   user: null,
   isAuthenticated: false,
-  login: (user) => set({ user, isAuthenticated: true }),
-  signup: (user) => set({ user, isAuthenticated: true }),
+  login: (user: User) => set({ user, isAuthenticated: true }),
+  signup: (user: User) => set({ user, isAuthenticated: true }),
   logout: () => set({ user: null, isAuthenticated: false }),
 }));

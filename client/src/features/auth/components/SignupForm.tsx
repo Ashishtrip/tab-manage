@@ -15,7 +15,7 @@ const signupSchema = z.object({
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupForm() {
-  const signup = useAuthStore((state) => state.signup);
+  const signup = useAuthStore((state: any) => state.signup);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
