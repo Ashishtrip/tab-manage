@@ -1,39 +1,111 @@
 :root {
-	--ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  /* Colors */
+  --color-bg: #fcf7f8;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f3f4f6;
+  --color-primary: #000000;
+  --color-text-primary: #000000;
+  --color-text-secondary: #343333;
+  --color-text-muted: #626262;
+  --color-border: #e5e7eb;
+  --color-accent-blue: #eff6ff;
+  
+  /* Spacing & Sizing */
+  --row-height: 32px;
+  --indent-width: 20px;
+  --border-radius-card: 6px;
+  --border-radius-row: 4px;
+  
+  /* Motion */
+  --transition-speed: 150ms;
+  --transition-ease: ease-in-out;
+}
 
-	--app-bg: #ffffff;
-	--sidebar-bg: #f7f7f8;
-	--panel-bg: #ffffff;
-	--input-bg: #ffffff;
-
-	--border-color: #e4e4e6;
-
-	--text-primary: #1c1c1f;
-	--text-muted: #6b6b72;
-	--text-faint: #9a9aa1;
-
-	--hover-bg: #f1f1f3;
-	--active-bg: #ece9fb;
-	--drop-bg: #e4e0fa;
-
-	--accent: #7c6bdb;
-	--accent-hover: #6c5bcb;
-
-	--badge-bg: #eeeeef;
-
-	--dot-color: #dcdcdf;
-
-	--base-font-size: 16px;
+/* Base resets */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
 }
 
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-body {
-	margin: 0;
-	background: var(--app-bg);
-	color: var(--text-primary);
-	font-family: var(--ui-font);
-	font-size: var(--base-font-size);
+/* Auth Page */
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.auth-card {
+  background: var(--color-surface);
+  padding: 2rem;
+  width: 100%;
+  max-width: 360px;
+  border-radius: var(--border-radius-card);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+/* Tree Nodes */
+.tree-node {
+  height: var(--row-height);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: var(--border-radius-row);
+  cursor: pointer;
+  transition: background var(--transition-speed) var(--transition-ease);
+  position: relative;
+  user-select: none;
+}
+
+.tree-node:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.tree-node.selected {
+  background-color: var(--color-accent-blue);
+  font-weight: 600;
+}
+
+/* Indentation & Guide Lines */
+.node-indent-guide {
+  position: absolute;
+  left: calc(var(--indent-width) * var(--depth) - 10px);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-border);
+}
+
+.node-content {
+  margin-left: calc(var(--indent-width) * var(--depth));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Drag Handle */
+.drag-handle {
+  opacity: 0;
+  transition: opacity var(--transition-speed);
+  margin-right: 4px;
+}
+
+.tree-node:hover .drag-handle {
+  opacity: 0.4;
+}
+
+/* Accessibility */
+.tree-node:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
