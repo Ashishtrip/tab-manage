@@ -270,7 +270,7 @@ function TreeRow({
 	return (
 		<div className="tab-tree-branch">
 			<div
-				className={`tab-tree-row${dropClass}`}
+				className={`tree-node${dropClass}`}
 				style={{ paddingLeft: 8 + depth * 18 }}
 				onClick={handleRowClick}
 				onContextMenu={handleContextMenu}

@@ -7,8 +7,8 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authCard}>
+    <div className="auth-container">
+      <div className="auth-card">
         <div className={styles.header}>
           <h1 className={styles.title}>{isLogin ? 'Welcome back' : 'Create an account'}</h1>
           <p className={styles.subtitle}>
