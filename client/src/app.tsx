@@ -8,11 +8,9 @@ import AuthPage from "./features/auth/components/AuthPage";
 import { useAuthStore } from "./features/auth/store/useAuthStore";
 
 function App() {
-	const { isAuthenticated, isLoading, checkAuth } = useAuthStore((state: any) => ({
-		isAuthenticated: state.isAuthenticated,
-		isLoading: state.isLoading,
-		checkAuth: state.checkAuth
-	}));
+	const isAuthenticated = useAuthStore((state: any) => state.isAuthenticated);
+	const isLoading = useAuthStore((state: any) => state.isLoading);
+	const checkAuth = useAuthStore((state: any) => state.checkAuth);
 
 	const { tree, loading: treeLoading } = useTabTree();
 	const { focusTab, deleteTab, createTab } = useTabActions();
