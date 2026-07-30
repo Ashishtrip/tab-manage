@@ -44,9 +44,10 @@
 
 .mindmap-link {
 	fill: none;
-	stroke: var(--border-color);
-	stroke-width: 1.4;
-	stroke-dasharray: 3 4;
+	stroke: color-mix(in srgb, var(--accent) 35%, var(--text-faint));
+	stroke-width: 2.2;
+	stroke-dasharray: 5 4;
+	stroke-linecap: round;
 }
 
 .mindmap-toolbar {
@@ -147,13 +148,35 @@
 	}
 }
 
-.mindmap-node--folder {
+.mindmap-node--tab {
 	font-weight: 500;
 }
 
 .mindmap-node--collapsed {
 	border-style: dashed;
 	background: var(--input-bg);
+}
+
+.mindmap-node-toggle {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--input-bg);
+	border: 1px solid var(--border-color);
+	border-radius: 50%;
+	color: var(--text-muted);
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+	padding: 0;
+}
+
+.mindmap-node-toggle:hover {
+	background: var(--hover-bg);
+	color: var(--text-primary);
 }
 
 .mindmap-node-icon {
