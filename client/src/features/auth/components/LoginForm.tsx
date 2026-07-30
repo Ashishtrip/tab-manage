@@ -14,7 +14,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
-  const login = useAuthStore((state) => state.login);
+  const login = useAuthStore((state: any) => state.login);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {

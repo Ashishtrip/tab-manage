@@ -7,7 +7,7 @@ import AuthPage from "./features/auth/components/AuthPage";
 import { useAuthStore } from "./features/auth/store/useAuthStore";
 
 function App() {
-	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+	const isAuthenticated = useAuthStore((state: any) => state.isAuthenticated);
 	const { tree, loading } = useTabTree();
 	const { focusTab, deleteTab, createTab } = useTabActions();
 	const { createFolder, deleteFolder } = useFolderActions();
