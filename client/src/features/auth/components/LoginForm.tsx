@@ -16,6 +16,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginForm() {
   const login = useAuthStore((state: any) => state.login);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const {
     register,
@@ -27,16 +28,15 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Mock successful login
-    login({
-      id: Math.random().toString(36).substr(2, 9),
-      name: data.email.split('@')[0],
-      email: data.email,
-    });
-    setIsSubmitting(false);
+    setGlobalError(null);
+    try {
+      await login(data);
+    } catch (error: any) {
+      const msg = error.response?.data?.error || 'Login failed. Please try again.';
+      setGlobalError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
