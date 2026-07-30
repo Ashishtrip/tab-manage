@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import WindowSidebar from "../../windows/components/WindowSidebar";
+import WindowCategoryModal from "../../windows/components/WindowCategoryModal";
+import { useWindows } from "../../windows/hooks/useWindows";
 import SearchResults from "./SearchResults";
 import Modal from "./Modal";
 import MindMap from "./MindMap";
+import ThemeToggle from "../../../components/ThemeToggle";
 import TabTreeView, {
 	type TabTree,
 	type TabTreeNode,
@@ -109,6 +112,11 @@ export default function AppLayout({
 	const [showNewFolderModal, setShowNewFolderModal] = useState(false);
 	const [viewMode, setViewMode] = useState<ViewMode>("tree");
 
+	const { categories, setCategory } = useWindows();
+
+	// Find the first uncategorized window to prompt the user
+	const uncategorizedWindowId = windowIds.find((id) => !categories[id]);
+
 	useEffect(() => {
 		if (activeWindowId && windowIds.includes(activeWindowId)) return;
 		setActiveWindowId(windowIds[0] ?? null);
@@ -126,7 +134,7 @@ export default function AppLayout({
 
 	return (
 		<div className="app-layout">
-			<WindowSidebar tree={tree} activeWindowId={activeWindowId} onSelectWindow={handleSelectWindow} />
+			<WindowSidebar tree={tree} activeWindowId={activeWindowId} onSelectWindow={handleSelectWindow} categories={categories} />
 			<div className="app-layout-divider" />
 			<main className="app-layout-main">
 				<div className="app-top-bar">
@@ -217,6 +225,15 @@ export default function AppLayout({
 					onCancel={() => setShowNewFolderModal(false)}
 				/>
 			)}
+			{uncategorizedWindowId && (
+				<WindowCategoryModal
+					windowId={uncategorizedWindowId}
+					onSubmit={(category) => {
+						setCategory(uncategorizedWindowId, category);
+					}}
+				/>
+			)}
+			<ThemeToggle />
 		</div>
 	);
 }

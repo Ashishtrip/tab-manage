@@ -5,6 +5,7 @@ interface WindowSidebarProps {
 	tree: TabTree;
 	activeWindowId: string | null;
 	onSelectWindow: (windowId: string) => void;
+	categories?: Record<string, string>;
 }
 
 function WindowIcon() {
@@ -16,7 +17,7 @@ function WindowIcon() {
 	);
 }
 
-export default function WindowSidebar({ tree, activeWindowId, onSelectWindow }: WindowSidebarProps) {
+export default function WindowSidebar({ tree, activeWindowId, onSelectWindow, categories = {} }: WindowSidebarProps) {
 	const windowIds = Object.keys(tree);
 
 	return (
@@ -31,7 +32,7 @@ export default function WindowSidebar({ tree, activeWindowId, onSelectWindow }: 
 							onClick={() => onSelectWindow(windowId)}
 						>
 							<WindowIcon />
-							<span className="window-item-label">Window {i + 1}</span>
+							<span className="window-item-label">{categories[windowId] || `Window ${i + 1}`}</span>
 						</button>
 					</li>
 				))}

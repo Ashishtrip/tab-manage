@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
+import ThemeToggle from '../../../components/ThemeToggle';
 import styles from '../styles/auth.module.css';
 
 export default function AuthPage() {
@@ -30,6 +31,7 @@ export default function AuthPage() {
           </button>
         </div>
       </div>
+      <ThemeToggle />
     </div>
   );
 }

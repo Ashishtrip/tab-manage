@@ -1,0 +1,59 @@
+.theme-toggle-container {
+	position: fixed;
+	bottom: 24px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 1000;
+}
+
+.theme-toggle-btn {
+	background: var(--panel-bg);
+	border: 1px solid var(--border-color);
+	border-radius: 24px;
+	padding: 8px 16px;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
+	color: var(--text-muted);
+}
+
+.theme-toggle-btn:hover {
+	background: var(--hover-bg);
+	color: var(--text-primary);
+}
+
+.theme-toggle-icons {
+	display: flex;
+	gap: 16px;
+	position: relative;
+}
+
+.theme-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: color 0.3s ease;
+}
+
+.theme-icon.active {
+	color: var(--text-primary);
+}
+
+.theme-dot {
+	width: 6px;
+	height: 6px;
+	background-color: var(--accent);
+	border-radius: 50%;
+	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	/* Initially positioned under the sun icon (left side) */
+	transform: translateX(-18px);
+}
+
+.theme-dot.dark-mode {
+	/* Moves under the moon icon (right side) */
+	transform: translateX(18px);
+}
