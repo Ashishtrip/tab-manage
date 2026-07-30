@@ -111,6 +111,8 @@ export default function AppLayout({
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showNewFolderModal, setShowNewFolderModal] = useState(false);
 	const [viewMode, setViewMode] = useState<ViewMode>("tree");
+	const [isSidebarLocked, setIsSidebarLocked] = useState(false);
+	const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 
 	const { categories, setCategory } = useWindows();
 
@@ -134,8 +136,21 @@ export default function AppLayout({
 
 	return (
 		<div className="app-layout">
-			<WindowSidebar tree={tree} activeWindowId={activeWindowId} onSelectWindow={handleSelectWindow} categories={categories} />
-			<div className="app-layout-divider" />
+			<div 
+				className={`sidebar-wrapper ${isSidebarLocked ? "locked" : "floating"} ${isSidebarHovered ? "hovered" : ""}`}
+				onMouseEnter={() => !isSidebarLocked && setIsSidebarHovered(true)}
+				onMouseLeave={() => !isSidebarLocked && setIsSidebarHovered(false)}
+			>
+				{!isSidebarLocked && !isSidebarHovered && <div className="sidebar-trigger-zone" />}
+				<WindowSidebar 
+					tree={tree} 
+					activeWindowId={activeWindowId} 
+					onSelectWindow={handleSelectWindow} 
+					categories={categories}
+					isLocked={isSidebarLocked}
+					onToggleLock={() => setIsSidebarLocked(!isSidebarLocked)}
+				/>
+			</div>
 			<main className="app-layout-main">
 				<div className="app-top-bar">
 					<div className="app-search-box">

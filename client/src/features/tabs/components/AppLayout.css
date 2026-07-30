@@ -4,10 +4,28 @@
 	background: var(--app-bg);
 }
 
-.app-layout-divider {
-	width: 1px;
-	background: var(--border-color);
+.sidebar-wrapper {
+	position: relative;
+	height: 100vh;
 	flex-shrink: 0;
+	z-index: 100;
+}
+
+.sidebar-wrapper.floating {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 0;
+}
+
+.sidebar-trigger-zone {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 20px;
+	z-index: 20;
 }
 
 .app-layout-main {
