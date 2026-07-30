@@ -187,7 +187,6 @@ export default function AppLayout({
 						windowId={Number(activeWindowId)}
 						onSelectTab={onSelectTab}
 						onDeleteTab={onDeleteTab}
-						onDeleteFolder={onDeleteFolder}
 					/>
 				) : activeWindowId ? (
 					<TabTreeView

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import type { TreeEntry, TabTreeNode, FolderTreeNode } from "./TabTree";
+import type { TreeEntry, TabTreeNode } from "./TabTree";
 import "./MindMap.css";
 
 interface MindMapProps {
@@ -7,12 +7,17 @@ interface MindMapProps {
 	windowId: number;
 	onSelectTab?: (tab: TabTreeNode) => void;
 	onDeleteTab?: (tab: TabTreeNode) => void;
-	onDeleteFolder?: (folder: FolderTreeNode) => void;
+}
+
+/** A tab plus the tabs it opened (derived from openerTabId, not folder membership). */
+interface OpenerNode {
+	tab: TabTreeNode;
+	children: OpenerNode[];
 }
 
 interface PositionedNode {
 	key: string;
-	entry: TreeEntry;
+	node: OpenerNode;
 	x: number;
 	y: number;
 	depth: number;
@@ -26,9 +31,12 @@ interface ViewTransform {
 }
 
 // Layout constants: each ring of the map sits RADIUS_STEP further out than the last.
-const BASE_RADIUS = 130;
-const RADIUS_STEP = 140;
-const GAP_RATIO = 0.16; // fraction of each node's angular slice left as breathing room
+// These are sized generously against the node pill's max-width (190px) so that even a
+// straight one-child-per-tab chain (which places nodes along the same ray) clears the
+// hub and each other, rather than stacking on top of one another.
+const BASE_RADIUS = 190;
+const RADIUS_STEP = 230;
+const GAP_RATIO = 0.22; // fraction of each node's angular slice left as breathing room
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 2.4;
 
@@ -41,34 +49,73 @@ function faviconUrl(url: string): string | null {
 	}
 }
 
-/** How many leaf slots a node should reserve in its parent's arc. Collapsed folders count as one. */
-function leafWeight(entry: TreeEntry, collapsed: Set<string>): number {
-	if (entry.type === "tab") return 1;
-	if (collapsed.has(entry.id) || entry.children.length === 0) return 1;
-	return entry.children.reduce((sum, child) => sum + leafWeight(child, collapsed), 0);
+/** Pull every tab out of the folder tree, regardless of which folder (if any) it lives in. */
+function flattenTabs(entries: TreeEntry[]): TabTreeNode[] {
+	const out: TabTreeNode[] = [];
+	function walk(list: TreeEntry[]) {
+		for (const e of list) {
+			if (e.type === "tab") out.push(e);
+			if (e.children && e.children.length > 0) walk(e.children);
+		}
+	}
+	walk(entries);
+	return out;
 }
 
-function countTabs(entry: TreeEntry): number {
-	if (entry.type === "tab") return 1;
-	return entry.children.reduce((sum, child) => sum + countTabs(child), 0);
+/**
+ * Group tabs into a forest based on which tab opened which (openerTabId), i.e. the
+ * browser's actual parent/child lineage, independent of how tabs are filed into folders.
+ * A tab becomes a root if it has no openerTabId, opened itself, or its opener has since
+ * closed (no longer present in this window).
+ */
+function buildOpenerForest(tabs: TabTreeNode[]): OpenerNode[] {
+	const byId = new Map(tabs.map((t) => [t.id, t]));
+	const childIdsByOpener = new Map<number, TabTreeNode[]>();
+	const roots: TabTreeNode[] = [];
+
+	for (const t of tabs) {
+		const openerId = t.openerTabId;
+		if (openerId != null && openerId !== t.id && byId.has(openerId)) {
+			if (!childIdsByOpener.has(openerId)) childIdsByOpener.set(openerId, []);
+			childIdsByOpener.get(openerId)!.push(t);
+		} else {
+			roots.push(t);
+		}
+	}
+
+	function build(tab: TabTreeNode): OpenerNode {
+		return { tab, children: (childIdsByOpener.get(tab.id) ?? []).map(build) };
+	}
+
+	return roots.map(build);
 }
 
-function layoutTree(entries: TreeEntry[], collapsed: Set<string>): PositionedNode[] {
+function subtreeSize(node: OpenerNode): number {
+	return 1 + node.children.reduce((sum, c) => sum + subtreeSize(c), 0);
+}
+
+/** How many leaf slots a node should reserve in its parent's arc. Collapsed nodes count as one. */
+function leafWeight(node: OpenerNode, collapsed: Set<number>): number {
+	if (collapsed.has(node.tab.id) || node.children.length === 0) return 1;
+	return node.children.reduce((sum, c) => sum + leafWeight(c, collapsed), 0);
+}
+
+function layoutForest(forest: OpenerNode[], collapsed: Set<number>): PositionedNode[] {
 	const nodes: PositionedNode[] = [];
 
 	function place(
-		list: TreeEntry[],
+		list: OpenerNode[],
 		startAngle: number,
 		endAngle: number,
 		depth: number,
 		parent: { x: number; y: number }
 	) {
-		const total = list.reduce((sum, e) => sum + leafWeight(e, collapsed), 0) || 1;
+		const total = list.reduce((sum, n) => sum + leafWeight(n, collapsed), 0) || 1;
 		const radius = BASE_RADIUS + (depth - 1) * RADIUS_STEP;
 		let cursor = startAngle;
 
-		for (const entry of list) {
-			const weight = leafWeight(entry, collapsed);
+		for (const node of list) {
+			const weight = leafWeight(node, collapsed);
 			const rawSpan = (endAngle - startAngle) * (weight / total);
 			const gap = rawSpan * GAP_RATIO;
 			const span = Math.max(rawSpan - gap, 0);
@@ -76,23 +123,22 @@ function layoutTree(entries: TreeEntry[], collapsed: Set<string>): PositionedNod
 			const x = Math.cos(angle) * radius;
 			const y = Math.sin(angle) * radius;
 
-			nodes.push({ key: `${entry.type}:${entry.id}`, entry, x, y, depth, parent });
+			nodes.push({ key: `tab:${node.tab.id}`, node, x, y, depth, parent });
 
-			const isOpenFolder = entry.type === "folder" && !collapsed.has(entry.id) && entry.children.length > 0;
-			if (isOpenFolder) {
-				place(entry.children, cursor + gap / 2, cursor + gap / 2 + span, depth + 1, { x, y });
+			const isOpen = !collapsed.has(node.tab.id) && node.children.length > 0;
+			if (isOpen) {
+				place(node.children, cursor + gap / 2, cursor + gap / 2 + span, depth + 1, { x, y });
 			}
 			cursor += rawSpan;
 		}
 	}
 
-	place(entries, 0, Math.PI * 2, 1, { x: 0, y: 0 });
+	place(forest, 0, Math.PI * 2, 1, { x: 0, y: 0 });
 	return nodes;
 }
 
 function fitTransform(nodes: PositionedNode[], width: number, height: number): ViewTransform {
-	if (width === 0 || height === 0) return { scale: 1, x: width / 2, y: height / 2 };
-	if (nodes.length === 0) return { scale: 1, x: width / 2, y: height / 2 };
+	if (width === 0 || height === 0 || nodes.length === 0) return { scale: 1, x: width / 2, y: height / 2 };
 
 	let minX = 0;
 	let maxX = 0;
@@ -119,23 +165,9 @@ function fitTransform(nodes: PositionedNode[], width: number, height: number): V
 	};
 }
 
-function FolderGlyph() {
-	return (
-		<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
-			<path
-				d="M2.5 5.3c0-.83.67-1.5 1.5-1.5h3.6l1.6 1.8H16c.83 0 1.5.67 1.5 1.5v6.6c0 .83-.67 1.5-1.5 1.5H4c-.83 0-1.5-.67-1.5-1.5V5.3Z"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="1.5"
-				strokeLinejoin="round"
-			/>
-		</svg>
-	);
-}
-
-export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab, onDeleteFolder }: MindMapProps) {
+export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab }: MindMapProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+	const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
 	const [transform, setTransform] = useState<ViewTransform>({ scale: 1, x: 0, y: 0 });
 	const panRef = useRef({ active: false, startX: 0, startY: 0, origX: 0, origY: 0 });
 
@@ -144,8 +176,9 @@ export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab, o
 		setCollapsed(new Set());
 	}, [windowId]);
 
-	const nodes = useMemo(() => layoutTree(entries, collapsed), [entries, collapsed]);
-	const totalTabs = useMemo(() => entries.reduce((sum, e) => sum + countTabs(e), 0), [entries]);
+	const tabs = useMemo(() => flattenTabs(entries), [entries]);
+	const forest = useMemo(() => buildOpenerForest(tabs), [tabs]);
+	const nodes = useMemo(() => layoutForest(forest, collapsed), [forest, collapsed]);
 
 	const recenter = useCallback(() => {
 		const el = containerRef.current;
@@ -193,7 +226,7 @@ export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab, o
 		panRef.current.active = false;
 	};
 
-	const toggleFolder = (id: string) => {
+	const toggleCollapse = (id: number) => {
 		setCollapsed((prev) => {
 			const next = new Set(prev);
 			if (next.has(id)) next.delete(id);
@@ -225,7 +258,7 @@ export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab, o
 				</button>
 			</div>
 
-			{entries.length === 0 ? (
+			{tabs.length === 0 ? (
 				<div className="mindmap-empty">No tabs in this window.</div>
 			) : (
 				<div
@@ -250,7 +283,7 @@ export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab, o
 										key={`link-${n.key}`}
 										d={d}
 										className="mindmap-link"
-										style={{ opacity: Math.max(0.28, 1 - (n.depth - 1) * 0.16) }}
+										style={{ opacity: Math.max(0.55, 1 - (n.depth - 1) * 0.1) }}
 									/>
 								);
 							})}
@@ -258,35 +291,27 @@ export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab, o
 
 						<div className="mindmap-node mindmap-node--root">
 							<span className="mindmap-node-label">
-								{totalTabs} tab{totalTabs === 1 ? "" : "s"}
+								{tabs.length} tab{tabs.length === 1 ? "" : "s"}
 							</span>
 						</div>
 
 						{nodes.map((n) => {
-							const isFolder = n.entry.type === "folder";
-							const isCollapsed = isFolder && collapsed.has(n.entry.id);
-							const tab = !isFolder ? (n.entry as TabTreeNode) : null;
-							const folder = isFolder ? (n.entry as FolderTreeNode) : null;
-							const favicon = tab ? faviconUrl(tab.url) : null;
-							const canDelete = isFolder ? !!onDeleteFolder : !!onDeleteTab;
+							const { tab } = n.node;
+							const isCollapsed = collapsed.has(tab.id);
+							const hasChildren = n.node.children.length > 0;
+							const favicon = faviconUrl(tab.url);
+							const openedCount = hasChildren ? subtreeSize(n.node) - 1 : 0;
 							const nodeOpacity = Math.max(0.6, 1 - (n.depth - 1) * 0.1);
 
 							return (
 								<div
 									key={n.key}
-									className={`mindmap-node mindmap-node--${n.entry.type}${isCollapsed ? " mindmap-node--collapsed" : ""}`}
+									className={`mindmap-node mindmap-node--tab${isCollapsed ? " mindmap-node--collapsed" : ""}`}
 									style={{ left: n.x, top: n.y, opacity: nodeOpacity }}
-									onClick={() => {
-										if (folder) toggleFolder(folder.id);
-										else if (tab) onSelectTab?.(tab);
-									}}
-									title={folder ? folder.name : tab?.title || tab?.url}
+									onClick={() => onSelectTab?.(tab)}
+									title={tab.title || tab.url}
 								>
-									{folder ? (
-										<span className="mindmap-node-icon mindmap-node-icon--folder">
-											<FolderGlyph />
-										</span>
-									) : favicon ? (
+									{favicon ? (
 										<img
 											src={favicon}
 											alt=""
@@ -299,20 +324,37 @@ export default function MindMap({ entries, windowId, onSelectTab, onDeleteTab, o
 										<span className="mindmap-node-icon mindmap-node-icon--placeholder" />
 									)}
 
-									<span className="mindmap-node-label">{folder ? folder.name : tab?.title || tab?.url}</span>
+									<span className="mindmap-node-label">{tab.title || tab.url}</span>
 
-									{folder && <span className="mindmap-node-badge">{countTabs(folder)}</span>}
+									{hasChildren && (
+										<>
+											<span className="mindmap-node-badge" title={`${openedCount} tab${openedCount === 1 ? "" : "s"} opened from here`}>
+												{openedCount}
+											</span>
+											<button
+												type="button"
+												className="mindmap-node-toggle"
+												onClick={(e) => {
+													e.stopPropagation();
+													toggleCollapse(tab.id);
+												}}
+												aria-label={isCollapsed ? "Expand opened tabs" : "Collapse opened tabs"}
+												title={isCollapsed ? "Expand opened tabs" : "Collapse opened tabs"}
+											>
+												{isCollapsed ? "+" : "\u2212"}
+											</button>
+										</>
+									)}
 
-									{canDelete && (
+									{onDeleteTab && (
 										<button
 											type="button"
 											className="mindmap-node-delete"
 											onClick={(e) => {
 												e.stopPropagation();
-												if (folder) onDeleteFolder?.(folder);
-												else if (tab) onDeleteTab?.(tab);
+												onDeleteTab(tab);
 											}}
-											aria-label={folder ? `Delete ${folder.name}` : `Close ${tab?.title || tab?.url}`}
+											aria-label={`Close ${tab.title || tab.url}`}
 										>
 											&times;
 										</button>
