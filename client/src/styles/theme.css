@@ -1,33 +1,63 @@
 :root {
-	--ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+	--ui-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
-	--app-bg: #ffffff;
-	--sidebar-bg: #f7f7f8;
+	/* Light Mode (Stitch Monolith) */
+	--app-bg: #fdf8f9;
+	--sidebar-bg: #f7f2f3;
 	--panel-bg: #ffffff;
 	--input-bg: #ffffff;
+	--border-color: #cfc4c5;
+	--text-primary: #1c1b1c;
+	--text-muted: #4c4546;
+	--text-faint: #7e7576;
+	--hover-bg: #f3f4f6;
+	--active-bg: #e6e1e2;
+	--drop-bg: #ece7e8;
+	--accent: #000000;
+	--accent-hover: #1b1b1b;
+	--accent-text: #ffffff;
+	--badge-bg: #e1dfdf;
+	--dot-color: #c6c6c6;
+	--base-font-size: 13px;
+	--radius: 4px;
+	--radius-lg: 6px;
 
-	--border-color: #e4e4e6;
-
-	--text-primary: #1c1c1f;
-	--text-muted: #6b6b72;
-	--text-faint: #9a9aa1;
-
-	--hover-bg: #f1f1f3;
-	--active-bg: #ece9fb;
-	--drop-bg: #e4e0fa;
-
-	--accent: #7c6bdb;
-	--accent-hover: #6c5bcb;
-
-	--badge-bg: #eeeeef;
-
-	--dot-color: #dcdcdf;
-
-	--base-font-size: 16px;
+	/* Legacy tokens for compatibility with remote changes */
+	--color-bg: var(--app-bg);
+	--color-surface: var(--panel-bg);
+	--color-surface-hover: var(--hover-bg);
+	--color-primary: var(--accent);
+	--color-text-primary: var(--text-primary);
+	--color-text-secondary: var(--text-muted);
+	--color-text-muted: var(--text-faint);
+	--color-border: var(--border-color);
+	--color-accent-blue: var(--active-bg);
+	--row-height: 32px;
+	--indent-width: 20px;
+	--border-radius-card: var(--radius-lg);
+	--border-radius-row: var(--radius);
+	--transition-speed: 150ms;
+	--transition-ease: ease-in-out;
 }
 
-* {
-	box-sizing: border-box;
+[data-theme='dark'] {
+	/* Dark Mode (Inverted Black) */
+	--app-bg: #000000;
+	--sidebar-bg: #1c1b1c;
+	--panel-bg: #1b1b1b;
+	--input-bg: #1b1b1b;
+	--border-color: #313031;
+	--text-primary: #fdf8f9;
+	--text-muted: #c6c6c6;
+	--text-faint: #848484;
+	--hover-bg: #313031;
+	--active-bg: #4c4546;
+	--drop-bg: #626262;
+	--accent: #ffffff;
+	--accent-hover: #e2e2e2;
+	--accent-text: #000000;
+	--badge-bg: #313031;
+	--dot-color: #626262;
 }
 
 body {
@@ -36,4 +66,86 @@ body {
 	color: var(--text-primary);
 	font-family: var(--ui-font);
 	font-size: var(--base-font-size);
+	transition: background-color 0.3s ease, color 0.3s ease;
+	-webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Auth Page */
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.auth-card {
+  background: var(--color-surface);
+  padding: 2rem;
+  width: 100%;
+  max-width: 360px;
+  border-radius: var(--border-radius-card);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+/* Tree Nodes */
+.tree-node {
+  height: var(--row-height);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: var(--border-radius-row);
+  cursor: pointer;
+  transition: background var(--transition-speed) var(--transition-ease);
+  position: relative;
+  user-select: none;
+}
+
+.tree-node:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.tree-node.selected {
+  background-color: var(--color-accent-blue);
+  font-weight: 600;
+}
+
+/* Indentation & Guide Lines */
+.node-indent-guide {
+  position: absolute;
+  left: calc(var(--indent-width) * var(--depth) - 10px);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-border);
+}
+
+.node-content {
+  margin-left: calc(var(--indent-width) * var(--depth));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Drag Handle */
+.drag-handle {
+  opacity: 0;
+  transition: opacity var(--transition-speed);
+  margin-right: 4px;
+}
+
+.tree-node:hover .drag-handle {
+  opacity: 0.4;
+}
+
+/* Accessibility */
+.tree-node:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }

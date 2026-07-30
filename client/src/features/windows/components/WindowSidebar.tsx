@@ -1,3 +1,4 @@
+import { Pin, PinOff } from "lucide-react";
 import type { TabTree } from "../../tabs/components/TabTree";
 import "./WindowSidebar.css";
 
@@ -5,6 +6,9 @@ interface WindowSidebarProps {
 	tree: TabTree;
 	activeWindowId: string | null;
 	onSelectWindow: (windowId: string) => void;
+	categories?: Record<string, string>;
+	isLocked?: boolean;
+	onToggleLock?: () => void;
 }
 
 function WindowIcon() {
@@ -16,12 +20,32 @@ function WindowIcon() {
 	);
 }
 
-export default function WindowSidebar({ tree, activeWindowId, onSelectWindow }: WindowSidebarProps) {
+export default function WindowSidebar({ 
+	tree, 
+	activeWindowId, 
+	onSelectWindow, 
+	categories = {},
+	isLocked = false,
+	onToggleLock
+}: WindowSidebarProps) {
 	const windowIds = Object.keys(tree);
 
 	return (
 		<nav className="window-sidebar" aria-label="Windows">
-			<div className="window-sidebar-header">Windows</div>
+			<div className="window-sidebar-header">
+				<span>Windows</span>
+				{onToggleLock && (
+					<button 
+						type="button"
+						className={`window-sidebar-lock-btn ${isLocked ? "locked" : ""}`} 
+						onClick={onToggleLock}
+						title={isLocked ? "Unpin sidebar" : "Pin sidebar"}
+						aria-label={isLocked ? "Unpin sidebar" : "Pin sidebar"}
+					>
+						{isLocked ? <Pin size={14} /> : <PinOff size={14} />}
+					</button>
+				)}
+			</div>
 			<ul className="window-list">
 				{windowIds.map((windowId, i) => (
 					<li key={windowId}>
@@ -31,7 +55,7 @@ export default function WindowSidebar({ tree, activeWindowId, onSelectWindow }: 
 							onClick={() => onSelectWindow(windowId)}
 						>
 							<WindowIcon />
-							<span className="window-item-label">Window {i + 1}</span>
+							<span className="window-item-label">{categories[windowId] || `Window ${i + 1}`}</span>
 						</button>
 					</li>
 				))}

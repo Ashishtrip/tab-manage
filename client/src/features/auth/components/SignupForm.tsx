@@ -7,7 +7,6 @@ import { useAuthStore } from '../store/useAuthStore';
 import styles from '../styles/auth.module.css';
 
 const signupSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -15,8 +14,9 @@ const signupSchema = z.object({
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupForm() {
-  const signup = useAuthStore((state) => state.signup);
+  const signup = useAuthStore((state: any) => state.signup);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const {
     register,
@@ -28,36 +28,25 @@ export default function SignupForm() {
 
   const onSubmit = async (data: SignupFormValues) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Mock successful signup
-    signup({
-      id: Math.random().toString(36).substr(2, 9),
-      name: data.name,
-      email: data.email,
-    });
-    setIsSubmitting(false);
+    setGlobalError(null);
+    try {
+      await signup(data);
+    } catch (error: any) {
+      const msg = error.response?.data?.error || 'Signup failed. Please try again.';
+      setGlobalError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className={styles.formGroup}>
-        <label className={styles.label} htmlFor="name">Name</label>
-        <input
-          id="name"
-          type="text"
-          className={`${styles.input} ${errors.name ? styles.inputError : ''}`}
-          placeholder="John Doe"
-          {...register('name')}
-        />
-        {errors.name && (
-          <span className={styles.errorMessage}>
-            <AlertCircle size={14} />
-            {errors.name.message}
-          </span>
-        )}
-      </div>
+      {globalError && (
+        <div className={styles.globalError}>
+          <AlertCircle size={16} />
+          <span>{globalError}</span>
+        </div>
+      )}
 
       <div className={styles.formGroup}>
         <label className={styles.label} htmlFor="email">Email</label>

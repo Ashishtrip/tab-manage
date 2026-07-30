@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import WindowSidebar from "../../windows/components/WindowSidebar";
+import WindowCategoryModal from "../../windows/components/WindowCategoryModal";
+import { useWindows } from "../../windows/hooks/useWindows";
 import SearchResults from "./SearchResults";
 import Modal from "./Modal";
+
 import MindMap from "./MindMap";
+import ThemeToggle from "../../../components/ThemeToggle";
 import TabTreeView, {
 	type TabTree,
 	type TabTreeNode,
@@ -108,6 +112,13 @@ export default function AppLayout({
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showNewFolderModal, setShowNewFolderModal] = useState(false);
 	const [viewMode, setViewMode] = useState<ViewMode>("tree");
+	const [isSidebarLocked, setIsSidebarLocked] = useState(false);
+	const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+
+	const { categories, setCategory } = useWindows();
+
+	// Find the first uncategorized window to prompt the user
+	const uncategorizedWindowId = windowIds.find((id) => !categories[id]);
 
 	useEffect(() => {
 		if (activeWindowId && windowIds.includes(activeWindowId)) return;
@@ -115,7 +126,6 @@ export default function AppLayout({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [windowIds.join(",")]);
 
-	const activeIndex = activeWindowId ? windowIds.indexOf(activeWindowId) : -1;
 	const entries = activeWindowId ? tree[activeWindowId] ?? [] : [];
 	const isSearching = searchQuery.trim().length > 0;
 	const searchResults = isSearching ? searchTree(tree, searchQuery) : [];
@@ -127,8 +137,21 @@ export default function AppLayout({
 
 	return (
 		<div className="app-layout">
-			<WindowSidebar tree={tree} activeWindowId={activeWindowId} onSelectWindow={handleSelectWindow} />
-			<div className="app-layout-divider" />
+			<div 
+				className={`sidebar-wrapper ${isSidebarLocked ? "locked" : "floating"} ${isSidebarHovered ? "hovered" : ""}`}
+				onMouseEnter={() => !isSidebarLocked && setIsSidebarHovered(true)}
+				onMouseLeave={() => !isSidebarLocked && setIsSidebarHovered(false)}
+			>
+				{!isSidebarLocked && !isSidebarHovered && <div className="sidebar-trigger-zone" />}
+				<WindowSidebar 
+					tree={tree} 
+					activeWindowId={activeWindowId} 
+					onSelectWindow={handleSelectWindow} 
+					categories={categories}
+					isLocked={isSidebarLocked}
+					onToggleLock={() => setIsSidebarLocked(!isSidebarLocked)}
+				/>
+			</div>
 			<main className="app-layout-main">
 				<div className="app-top-bar">
 					<div className="app-search-box">
@@ -218,6 +241,15 @@ export default function AppLayout({
 					onCancel={() => setShowNewFolderModal(false)}
 				/>
 			)}
+			{uncategorizedWindowId && (
+				<WindowCategoryModal
+					windowId={uncategorizedWindowId}
+					onSubmit={(category) => {
+						setCategory(uncategorizedWindowId, category);
+					}}
+				/>
+			)}
+			<ThemeToggle />
 		</div>
 	);
 }

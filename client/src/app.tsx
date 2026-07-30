@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import AppLayout from "./features/tabs/components/AppLayout";
 import { useTabTree } from "./features/tabs/hooks/useTabTree";
 import { useTabActions } from "./features/tabs/hooks/useTabActions";
@@ -7,17 +8,28 @@ import AuthPage from "./features/auth/components/AuthPage";
 import { useAuthStore } from "./features/auth/store/useAuthStore";
 
 function App() {
-	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-	const { tree, loading } = useTabTree();
+	const isAuthenticated = useAuthStore((state: any) => state.isAuthenticated);
+	const isLoading = useAuthStore((state: any) => state.isLoading);
+	const checkAuth = useAuthStore((state: any) => state.checkAuth);
+
+	const { tree, loading: treeLoading } = useTabTree();
 	const { focusTab, deleteTab, createTab } = useTabActions();
 	const { createFolder, deleteFolder } = useFolderActions();
 	const { moveEntry } = useTreeActions();
+
+	useEffect(() => {
+		checkAuth();
+	}, [checkAuth]);
+
+	if (isLoading) {
+		return <div style={{ padding: 20, color: "#a0a0a0" }}>Checking authentication...</div>;
+	}
 
 	if (!isAuthenticated) {
 		return <AuthPage />;
 	}
 
-	if (loading) {
+	if (treeLoading) {
 		return <div style={{ padding: 20, color: "#a0a0a0" }}>Loading tabs...</div>;
 	}
 
