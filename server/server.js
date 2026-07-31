@@ -3,7 +3,7 @@ import app from './config/express.js';
 import connectDB from './config/database.js';
 import registerListener from './config/socket.js'
 
-const PORT_SERVER = process.env.PORT || 5000;
+const PORT_SERVER = 5000;
 const PORT_DB = 27017;
 
 async function main() {

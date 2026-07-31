@@ -1,4 +1,4 @@
-# Tab Manager
+# Bastion
 
 A better way to organize your browser tabs.
 
