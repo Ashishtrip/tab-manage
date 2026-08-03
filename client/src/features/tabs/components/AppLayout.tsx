@@ -4,6 +4,14 @@ import WindowCategoryModal from "../../windows/components/WindowCategoryModal";
 import { useWindows } from "../../windows/hooks/useWindows";
 import SearchResults from "./SearchResults";
 import Modal from "./Modal";
+import CommandCenter from "../../search/components/CommandCenter";
+import SemanticDiscovery from "../../search/components/SemanticDiscovery";
+
+import ActiveTabs from "./views/ActiveTabs";
+import ArchivedTabs from "./views/ArchivedTabs";
+import AIClusters from "./views/AIClusters";
+import Handoff from "./views/Handoff";
+import SmartWorkspace from "./views/SmartWorkspace";
 
 import MindMap from "./MindMap";
 import ThemeToggle from "../../../components/ThemeToggle";
@@ -18,7 +26,7 @@ import { searchTree } from "../treeUtils";
 import "../../../styles/theme.css";
 import "./AppLayout.css";
 
-type ViewMode = "tree" | "mindmap";
+type ViewMode = "tree" | "mindmap" | "semantic" | "active" | "archived" | "clusters" | "handoff" | "workspace";
 
 interface AppLayoutProps {
 	tree: TabTree;
@@ -111,9 +119,10 @@ export default function AppLayout({
 	const [activeWindowId, setActiveWindowId] = useState<string | null>(windowIds[0] ?? null);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showNewFolderModal, setShowNewFolderModal] = useState(false);
-	const [viewMode, setViewMode] = useState<ViewMode>("tree");
+	const [viewMode, setViewMode] = useState<ViewMode>("workspace");
 	const [isSidebarLocked, setIsSidebarLocked] = useState(false);
 	const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+	const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
 
 	const { categories, setCategory } = useWindows();
 
@@ -154,14 +163,15 @@ export default function AppLayout({
 			</div>
 			<main className="app-layout-main">
 				<div className="app-top-bar">
-					<div className="app-search-box">
+					<div className="app-search-box" onClick={() => setIsCommandCenterOpen(true)} style={{ cursor: 'pointer' }}>
 						<SearchIcon />
 						<input
 							type="text"
 							className="app-search-input"
-							placeholder="Search tabs..."
+							placeholder="Search tabs or Cmd+K..."
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
+							style={{ pointerEvents: 'none' }}
 						/>
 					</div>
 					<div className="app-view-toggle" role="group" aria-label="View mode">
@@ -182,6 +192,62 @@ export default function AppLayout({
 							title="Mind map view"
 						>
 							<MindMapViewIcon />
+						</button>
+						<div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "workspace" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("workspace")}
+							disabled={isSearching}
+							title="Smart Workspace"
+						>
+							<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+						</button>
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "active" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("active")}
+							disabled={isSearching}
+							title="Active Tabs"
+						>
+							<ListViewIcon />
+						</button>
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "archived" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("archived")}
+							disabled={isSearching}
+							title="Archived Tabs"
+						>
+							<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+						</button>
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "clusters" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("clusters")}
+							disabled={isSearching}
+							title="AI Clusters"
+						>
+							<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+						</button>
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "handoff" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("handoff")}
+							disabled={isSearching}
+							title="Handoff"
+						>
+							<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+						</button>
+						<button
+							type="button"
+							className={`app-view-toggle-button${viewMode === "semantic" ? " app-view-toggle-button--active" : ""}`}
+							onClick={() => setViewMode("semantic")}
+							disabled={isSearching}
+							title="Semantic Discovery"
+							style={{ padding: '0 8px', fontSize: '12px', fontWeight: 500 }}
+						>
+							✨ AI
 						</button>
 					</div>
 					<button
@@ -205,6 +271,20 @@ export default function AppLayout({
 						onSelectTab={onSelectTab}
 						onSelectWindow={handleSelectWindow}
 					/>
+				) : viewMode === "workspace" ? (
+					<SmartWorkspace />
+				) : viewMode === "active" ? (
+					<ActiveTabs entries={entries} onSelectTab={onSelectTab} />
+				) : viewMode === "archived" ? (
+					<ArchivedTabs />
+				) : viewMode === "clusters" ? (
+					<AIClusters />
+				) : viewMode === "handoff" ? (
+					<Handoff />
+				) : viewMode === "semantic" ? (
+					<div style={{ flex: 1, padding: '24px', height: '100%' }}>
+						<SemanticDiscovery />
+					</div>
 				) : activeWindowId && viewMode === "mindmap" ? (
 					<MindMap
 						entries={entries}
@@ -250,6 +330,7 @@ export default function AppLayout({
 				/>
 			)}
 			<ThemeToggle />
+			<CommandCenter isOpen={isCommandCenterOpen} onClose={() => setIsCommandCenterOpen(false)} />
 		</div>
 	);
 }
