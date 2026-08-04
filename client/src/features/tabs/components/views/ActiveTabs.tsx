@@ -1,4 +1,5 @@
-import { TabTreeNode, TreeEntry } from '../TabTree';
+import type { TabTreeNode, TreeEntry } from '../TabTree';
+import { Archive } from 'lucide-react';
 
 interface ActiveTabsProps {
   entries: TreeEntry[];
@@ -29,6 +30,17 @@ export default function ActiveTabs({ entries, onSelectTab }: ActiveTabsProps) {
                 <div style={tabTitleStyle}>{tab.title || tab.url}</div>
                 <div style={tabUrlStyle}>{tab.url}</div>
               </div>
+              <button 
+                style={archiveButtonStyle}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // socket.emit('tab:updated', { id: tab.id, changeInfo: { isArchived: true } })
+                  console.log('Archive tab', tab.id);
+                }}
+                title="Archive Tab"
+              >
+                <Archive size={16} />
+              </button>
             </div>
           ))
         ) : (
@@ -136,4 +148,17 @@ const emptyIconStyle = {
   height: '48px',
   borderRadius: '50%',
   backgroundColor: 'var(--hover-bg)',
+};
+
+const archiveButtonStyle = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--text-muted)',
+  cursor: 'pointer',
+  padding: '8px',
+  borderRadius: '6px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'background-color 0.2s, color 0.2s',
 };

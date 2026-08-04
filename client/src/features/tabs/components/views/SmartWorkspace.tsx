@@ -1,6 +1,31 @@
 import { LayoutGrid, Clock, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
 
 export default function SmartWorkspace() {
+  const [stats, setStats] = useState({
+    activeTabs: 0,
+    windows: 0,
+    archivedTabs: 0,
+    clusters: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // We'd use a real api client with auth here
+        const response = await fetch('http://localhost:5000/api/tabs/stats', {credentials: 'include'});
+        if (response.ok) {
+            const data = await response.json();
+            setStats(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch stats", error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>
@@ -45,19 +70,19 @@ export default function SmartWorkspace() {
           </div>
           <div style={statsGridStyle}>
             <div style={statBoxStyle}>
-              <div style={statValueStyle}>12</div>
+              <div style={statValueStyle}>{stats.activeTabs}</div>
               <div style={statLabelStyle}>Active Tabs</div>
             </div>
             <div style={statBoxStyle}>
-              <div style={statValueStyle}>3</div>
+              <div style={statValueStyle}>{stats.windows}</div>
               <div style={statLabelStyle}>Windows</div>
             </div>
             <div style={statBoxStyle}>
-              <div style={statValueStyle}>142</div>
+              <div style={statValueStyle}>{stats.archivedTabs}</div>
               <div style={statLabelStyle}>Archived</div>
             </div>
             <div style={statBoxStyle}>
-              <div style={statValueStyle}>5</div>
+              <div style={statValueStyle}>{stats.clusters}</div>
               <div style={statLabelStyle}>Clusters</div>
             </div>
           </div>

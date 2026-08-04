@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRouter from '../features/auth/auth.routes.js';
 import tabsRouter from '../features/tabs/tabs.routes.js';
+import clustersRouter from '../features/clusters/clusters.routes.js';
 
 const app = express();
 app.use(express.json());
@@ -13,5 +14,6 @@ app.use(cors({
 }));
 app.use('/api/auth', authRouter);
 app.use('/api/tabs', tabsRouter);
+app.use('/api/clusters', clustersRouter);
 
 export default app;

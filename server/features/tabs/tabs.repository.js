@@ -1,4 +1,5 @@
 import Tabs from "./tabs.model.js";
+import { addTabToQueue } from "../../config/queue.js";
 
 const createTabEntry = async (tabObj) => {
 	let status;
@@ -10,6 +11,9 @@ const createTabEntry = async (tabObj) => {
 	}
 	if (!status?._id) {
 		console.warn("Couldn't insert tab entry", tabObj.id);
+	} else {
+		// Enqueue for AI processing
+		addTabToQueue(status).catch(err => console.error("Error adding tab to queue", err));
 	}
 };
 
@@ -105,9 +109,18 @@ const upsertManyTabEntries = async (arr) => {
 			upsert: true,
 		},
 	}));
-	let status;
 	try {
 		status = await Tabs.bulkWrite(operations);
+		
+		// For newly inserted tabs or all tabs, let's just queue the ones that were inserted or updated.
+		// Since bulkWrite doesn't return the full documents easily, we can find the ones we just touched
+		const updatedIds = arr.map(t => t.id);
+		const updatedDocs = await Tabs.find({ id: { $in: updatedIds } });
+		for (const doc of updatedDocs) {
+			if (!doc.embedding || doc.embedding.length === 0) {
+				addTabToQueue(doc).catch(err => console.error("Error adding tab to queue", err));
+			}
+		}
 	} catch (error) {
 		console.error(new Error("Couldn't upsert tab entries"), { cause: error });
 		return;

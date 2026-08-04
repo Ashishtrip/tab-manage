@@ -13,6 +13,11 @@ const tabsSchema = new mongoose.Schema({
 	// browser's own tab-strip position and gets overwritten on every sync).
 	// Only drag-and-drop reordering touches this field.
 	order: { type: Number, default: 0 },
+	// AI Features & Archiving
+	embedding: { type: [Number] },
+	isArchived: { type: Boolean, default: false },
+	archivedAt: { type: Date },
+	contentSummary: { type: String },
 })
 const Tabs = mongoose.model('tabs-info', tabsSchema)
 export default Tabs
