@@ -21,14 +21,20 @@ Tabs can be linked as **parents, children, and siblings**, grouped into **folder
 - 🖱️ Drag-and-drop rearranging of the tree
 - 🗂️ Multiple workspaces, each with its own tab tree
 - 🔌 Browser extension for capturing and syncing tabs
+- 🧠 **AI-Powered Semantic Clusters** — automatically groups related tabs by meaning using Google Gemini.
+- 📱 **Device Handoff** — seamlessly send tabs between your active devices via WebSockets.
+- 🗃️ **Smart Workspace** — unified dashboard with workspace stats and tab history.
 
 ## Tech Stack
 
-- **MongoDB** — database
+- **MongoDB** — database (stores tabs, devices, clusters)
 - **Express** — backend framework
 - **React** — frontend library
 - **Node.js** — runtime
 - **Browser Extension API** — tab capture and syncing
+- **Redis & BullMQ** — asynchronous background job queues for AI processing
+- **Socket.io** — real-time WebSocket communication for device presence and handoff
+- **Google Gemini API** — LLM used for text embeddings and topic clustering
 
 ## Project Structure
 
@@ -46,6 +52,19 @@ Tab-Manager/
 
 - Node.js
 - MongoDB (local instance or a connection URI)
+- Redis (local instance running on default port `6379`, e.g., via Docker or Homebrew)
+- A Google Gemini API Key
+
+### Configuration (Environment Variables)
+
+Before running the server, copy or create a `.env` file in the `server` directory:
+
+```bash
+JWT_ACCESS_SECRET=your_jwt_access_secret_here
+GEMINI_API_KEY=your_gemini_api_key_here
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+```
 
 ### Installation
 
